@@ -131,3 +131,4 @@ ffmpeg -ss 00:14:00 -to 00:20:00 -i podcast.mp4 -c copy podcast6min.mp4
 - [FFmpeg](https://ffmpeg.org/download.html)
 - [LR-ASD](https://github.com/Junhua-Liao/LR-ASD)
 - [WhisperX](https://github.com/m-bain/whisperX)
+- [ffmpegcv](https://github.com/chenxinfeng4/ffmpegcv)
