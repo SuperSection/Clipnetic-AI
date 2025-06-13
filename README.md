@@ -4,6 +4,10 @@ AI Podcast Clipper SaaS
 
 Clipnetic-AI is an end-to-end SaaS platform that transforms long-form podcast videos into viral short-form clips optimized for platforms like YouTube Shorts and TikTok. Powered by cutting-edge AI models, the app automatically transcribes content, detects high-engagement segments, and intelligently crops the clip to focus on the active speaker.
 
+## Basic Workflow of the Application
+
+![basic-workflow](./diagram/basic-flow.png)
+
 ---
 
 ## Features
