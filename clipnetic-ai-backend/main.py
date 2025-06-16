@@ -30,16 +30,15 @@ image = (modal.Image.from_registry(
     "nvidia/cuda:12.4.0-devel-ubuntu22.04", add_python="3.12")
     .apt_install(["ffmpeg", "libgl1-mesa-glx", "wget", "libcudnn8", "libcudnn8-dev"])
     .pip_install_from_requirements("requirements.txt")
-    .run_commands([
-        "mkdir -p /usr/share/fonts/truetype/custom",
-        "wget -O /usr/share/fonts/truetype/custom/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf",
-        "fc-cache -f -v "])
+    .run_commands(["mkdir -p /usr/share/fonts/truetype/custom",
+                   "wget -O /usr/share/fonts/truetype/custom/Anton-Regular.ttf https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf",
+                   "fc-cache -f -v"])
     .add_local_dir("asd", "/asd", copy=True))
 
-app = modal.App("clipnetic-ai", image=image)
+app = modal.App("ai-podcast-clipper", image=image)
 
 volume = modal.Volume.from_name(
-    "clipnetic-ai-model-cache", create_if_missing=True
+    "ai-podcast-clipper-model-cache", create_if_missing=True
 )
 
 mount_path = "/root/.cache/torch"
@@ -150,15 +149,15 @@ def create_vertical_video(tracks, scores, pyframes_path, pyavi_path, audio_path,
     subprocess.run(ffmpeg_command, shell=True, check=True, text=True)
 
 
-def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, clip_end: float, clip_video_path: str, output_path: str, max_word: int = 5):
+def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, clip_end: float, clip_video_path: str, output_path: str, max_words: int = 5):
     temp_dir = os.path.dirname(output_path)
     subtitle_path = os.path.join(temp_dir, "temp_subtitles.ass")
 
     clip_segments = [segment for segment in transcript_segments
                      if segment.get("start") is not None
                      and segment.get("end") is not None
-                     and segment.get("start") < clip_end
                      and segment.get("end") > clip_start
+                     and segment.get("start") < clip_end
                      ]
 
     subtitles = []
@@ -175,7 +174,7 @@ def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, c
             continue
 
         start_rel = max(0.0, seg_start - clip_start)
-        end_rel = max(0.0, seg_end, clip_start)
+        end_rel = max(0.0, seg_end - clip_start)
 
         if end_rel <= 0:
             continue
@@ -184,7 +183,7 @@ def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, c
             current_start = start_rel
             current_end = end_rel
             current_words = [word]
-        elif len(current_words) >= max_word:
+        elif len(current_words) >= max_words:
             subtitles.append(
                 (current_start, current_end, ' '.join(current_words)))
             current_words = [word]
@@ -201,7 +200,7 @@ def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, c
     subs = pysubs2.SSAFile()
 
     subs.info["WrapStyle"] = 0
-    subs.info["ScaleBorderAndShadow"] = "yes"
+    subs.info["ScaledBorderAndShadow"] = "yes"
     subs.info["PlayResX"] = 1080
     subs.info["PlayResY"] = 1920
     subs.info["ScriptType"] = "v4.00+"
@@ -213,11 +212,10 @@ def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, c
     new_style.primarycolor = pysubs2.Color(255, 255, 255)
     new_style.outline = 2.0
     new_style.shadow = 2.0
-    new_style.shadowcolor = pysubs2.Color(0, 0, 128)
+    new_style.shadowcolor = pysubs2.Color(0, 0, 0, 128)
     new_style.alignment = 2
     new_style.marginl = 50
     new_style.marginr = 50
-    new_style.marginv = 50
     new_style.marginv = 50
     new_style.spacing = 0.0
 
@@ -228,11 +226,12 @@ def create_subtitles_with_ffmpeg(transcript_segments: list, clip_start: float, c
         end_time = pysubs2.make_time(s=end)
         line = pysubs2.SSAEvent(
             start=start_time, end=end_time, text=text, style=style_name)
+        subs.events.append(line)
 
     subs.save(subtitle_path)
 
     ffmpeg_cmd = (f"ffmpeg -y -i {clip_video_path} -vf \"ass={subtitle_path}\" "
-                    f"-c:v h264 -preset fast -crf 23 {output_path}")
+                  f"-c:v h264 -preset fast -crf 23 {output_path}")
 
     subprocess.run(ffmpeg_cmd, shell=True, check=True)
 
@@ -302,7 +301,7 @@ def process_clip(base_dir: str, original_video_path: str, s3_key: str, start_tim
         f"Clip {clip_index} vertical video creation time: {cvv_end_time - cvv_start_time:.2f} seconds")
 
     create_subtitles_with_ffmpeg(transcript_segments, start_time,
-                                 end_time, vertical_mp4_path, subtitile_output_path, max_word=5)
+                                 end_time, vertical_mp4_path, subtitile_output_path, max_words=5)
 
     s3_client = boto3.client("s3")
     s3_client.upload_file(vertical_mp4_path, "clipnetic-ai", output_s3_key)
@@ -430,7 +429,7 @@ class ClipneticAI:
         print(clip_moments)
 
         # 3. Process clips
-        for index, moment in enumerate(clip_moments[:1]):
+        for index, moment in enumerate(clip_moments[:3]):
             if "start" in moment and "end" in moment:
                 print(
                     f"Processing clip {index}: from {moment['start']} to {moment['end']}")
@@ -451,7 +450,7 @@ def main():
     url = clipnetic_ai.process_video.web_url
 
     payload = {
-        "s3_key": "test1/eisr6min.mp4"
+        "s3_key": "test2/fundmanager.mp4"
     }
 
     headers = {
