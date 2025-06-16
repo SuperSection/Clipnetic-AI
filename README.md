@@ -221,3 +221,5 @@ Access Inngest Development UI on: <http://localhost:8288>
 - [WhisperX](https://github.com/m-bain/whisperX)
 - [ffmpegcv](https://github.com/chenxinfeng4/ffmpegcv)
 - [inngest – Next.js Quick Start](https://www.inngest.com/docs/getting-started/nextjs-quick-start)
+- [shadcn/ui – Next.js](https://ui.shadcn.com/docs/installation/next)
+- [Favicon Generator](https://favicon.io/)
