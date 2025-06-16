@@ -429,7 +429,7 @@ class ClipneticAI:
         print(clip_moments)
 
         # 3. Process clips
-        for index, moment in enumerate(clip_moments[:3]):
+        for index, moment in enumerate(clip_moments[:1]):
             if "start" in moment and "end" in moment:
                 print(
                     f"Processing clip {index}: from {moment['start']} to {moment['end']}")
