@@ -179,6 +179,36 @@ Create a virtual environment with **Python 3.12**. You can use [`pyenv`](https:/
 
 ---
 
+### Frontend Setup
+
+Install dependencies:
+
+```bash
+cd clipnetic-ai-frontend
+npm i
+```
+
+Run:
+
+```bash
+npm run dev
+```
+
+---
+
+### Inngest Queue
+
+Run the local queue development server with Inngest:
+
+```bash
+cd clipnetic-ai-frontend
+npm run inngest-dev
+```
+
+Access Inngest Development UI on: <http://localhost:8288>
+
+---
+
 ## Author
 
 - [Soumo Sarkar](https://www.linkedin.com/in/soumo-sarkar/)
@@ -190,3 +220,4 @@ Create a virtual environment with **Python 3.12**. You can use [`pyenv`](https:/
 - [LR-ASD](https://github.com/Junhua-Liao/LR-ASD)
 - [WhisperX](https://github.com/m-bain/whisperX)
 - [ffmpegcv](https://github.com/chenxinfeng4/ffmpegcv)
+- [inngest – Next.js Quick Start](https://www.inngest.com/docs/getting-started/nextjs-quick-start)
