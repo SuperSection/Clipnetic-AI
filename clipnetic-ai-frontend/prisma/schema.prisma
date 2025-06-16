@@ -57,9 +57,9 @@ model Session {
 model User {
     id               String    @id @default(cuid())
     name             String?
-    email            String?   @unique
+    email            String    @unique
     emailVerified    DateTime?
-    password         String?
+    password         String
     credits          Int       @default(10)
     stripeCustomerId String?   @unique
     image            String?
@@ -68,18 +68,18 @@ model User {
     posts            Post[]
 
     uploadedFiles UploadedFile[]
-    clips Clip[]
+    clips         Clip[]
 }
 
 model UploadedFile {
-    id          String   @id @default(cuid())
+    id          String  @id @default(cuid())
     s3Key       String
     displayName String?
-    uploaded    Boolean  @default(false)
-    status      String   @default("queued") // processing, processed, no credits
-    
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    uploaded    Boolean @default(false)
+    status      String  @default("queued") // processing, processed, no credits
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     clips Clip[]
 
@@ -90,13 +90,13 @@ model UploadedFile {
 }
 
 model Clip {
-    id String @id @default(cuid())
-    s3Key       String
+    id    String @id @default(cuid())
+    s3Key String
 
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-    uploadedFile UploadedFile? @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+    uploadedFile   UploadedFile? @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
     uploadedFileId String?
 
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
