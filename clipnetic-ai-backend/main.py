@@ -35,10 +35,10 @@ image = (modal.Image.from_registry(
                    "fc-cache -f -v"])
     .add_local_dir("asd", "/asd", copy=True))
 
-app = modal.App("ai-podcast-clipper", image=image)
+app = modal.App("clipnetic-ai", image=image)
 
 volume = modal.Volume.from_name(
-    "ai-podcast-clipper-model-cache", create_if_missing=True
+    "clipnetic-ai-model-cache", create_if_missing=True
 )
 
 mount_path = "/root/.cache/torch"
@@ -411,8 +411,8 @@ class ClipneticAI:
         transcript_segments_json = self.transcribe_video(base_dir, video_path)
         transcript_segments = json.loads(transcript_segments_json)
 
-        # 2. Identify moments
-        print("Identifying clip moments...")
+        # 2. Identify moments for clips
+        print("Identifying clip moments")
         identified_moments_raw = self.identify_moments(transcript_segments)
 
         cleaned_json_string = identified_moments_raw.strip()
@@ -422,8 +422,8 @@ class ClipneticAI:
             cleaned_json_string = cleaned_json_string[:-len("```")].strip()
 
         clip_moments = json.loads(cleaned_json_string)
-        if not isinstance(clip_moments, list):
-            print("Error: Identifying moments is not a list")
+        if not clip_moments or not isinstance(clip_moments, list):
+            print("Error: Identified moments is not a list")
             clip_moments = []
 
         print(clip_moments)
