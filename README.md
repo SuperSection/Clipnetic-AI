@@ -121,6 +121,64 @@ ffmpeg -ss 00:14:00 -to 00:20:00 -i podcast.mp4 -c copy podcast6min.mp4
 
 ---
 
+## Setup the Project Locally
+
+Follow these steps to install and set up the project.
+
+### Clone the Repository
+
+```bash
+git clone --recurse-submodules https://github.com/Andreaswt/ai-podcast-clipper-saas.git
+```
+
+### Install Python
+
+Download and install Python if not already installed. Refer to the Official [Python Download](https://www.python.org/downloads/) page for guidance on installation.
+
+Create a virtual environment with **Python 3.12**. You can use [`pyenv`](https://github.com/pyenv/pyenv) or [`pyenv-win`](https://github.com/pyenv-win/pyenv-win) to set specific Python version while creating a `.venv`
+
+---
+
+### Backend Setup
+
+1. Navigate to backend folder:
+
+    ```bash
+    cd clipnetic-ai-backend
+    ```
+
+2. Install dependencies:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. Clone the [LR-ASD](https://github.com/Junhua-Liao/LR-ASD) repo into the backend folder, and rename the folder as `asd`:
+
+    ```bash
+    git clone https://github.com/Junhua-Liao/LR-ASD.git asd
+    ```
+
+4. Modal setup:
+
+    ```bash
+    modal setup
+    ```
+
+5. Run on Modal:
+
+    ```bash
+    modal run main.py
+    ```
+
+6. Deploy backend:
+
+    ```bash
+    modal deploy main.py
+    ```
+
+---
+
 ## Author
 
 - [Soumo Sarkar](https://www.linkedin.com/in/soumo-sarkar/)
