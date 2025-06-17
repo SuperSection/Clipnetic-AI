@@ -223,3 +223,4 @@ Access Inngest Development UI on: <http://localhost:8288>
 - [inngest – Next.js Quick Start](https://www.inngest.com/docs/getting-started/nextjs-quick-start)
 - [shadcn/ui – Next.js](https://ui.shadcn.com/docs/installation/next)
 - [Favicon Generator](https://favicon.io/)
+- [React Hook Form](https://react-hook-form.com/get-started)
