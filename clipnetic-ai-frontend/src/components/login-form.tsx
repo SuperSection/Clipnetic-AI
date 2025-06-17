@@ -15,13 +15,12 @@ import {
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { signupSchema, type SignupFormValues } from "~/schemas/auth";
-import { signUp } from "~/actions/auth";
+import { loginSchema, type LoginFormValues } from "~/schemas/auth";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 
-export function SignupForm({
+export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -33,32 +32,26 @@ export function SignupForm({
     register,
     handleSubmit,
     formState: { errors }
-  } = useForm<SignupFormValues>({ resolver: zodResolver(signupSchema) });
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
-  const onSubmit = async (data: SignupFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
       setError(null);
 
-      const response = await signUp(data);
-      if (!response.success) {
-        setError(response.error ?? "An error occurred during signup");
-        return;
-      }
-
-      const signUpResult = await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
-      if (signUpResult?.error) {
-        setError("Account created but couldn't sign in automatically. Please try again.");
+      if (signInResult?.error) {
+        setError("Invalid email or password");
       } else {
         router.push("/dashboard");
       }
     } catch (error) {
-      setError("Failed to sign you up!")
+      setError("Failed to log you in!")
     } finally {
       setIsSubmitting(false);
     }
@@ -68,26 +61,14 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
+          <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            We&apos;re glad to have you on Clipnetic AI
+            Welcome back to Clipnetic AI
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your full name"
-                  required
-                  {...register("name")}
-                />
-                {errors.name && (<p className="text-sm text-red-500">{errors.name.message}</p>)}
-              </div>
-
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -119,14 +100,14 @@ export function SignupForm({
 
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Signing up..." : "Sign up"}
+                  {isSubmitting ? "Logging in..." : "Log in"}
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/login" className="underline underline-offset-4">
-                Login
+              Don&apos;t have an account?{" "}
+              <Link href="/signup" className="underline underline-offset-4">
+                Sign up
               </Link>
             </div>
           </form>

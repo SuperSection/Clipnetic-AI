@@ -19,7 +19,7 @@ export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
     };
   }
 
-  const { email, password } = validationResult.data;
+  const { name, email, password } = validationResult.data;
 
   try {
     const existingUser = await db.user.findUnique({ where: { email } });
@@ -41,6 +41,7 @@ export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
 
     await db.user.create({
       data: {
+        name,
         email,
         password: hashedPassword,
         // stripeCustomerId: stripeCustomer.id,
