@@ -82,7 +82,6 @@ export function SignupForm({
                   id="name"
                   type="text"
                   placeholder="Your full name"
-                  required
                   {...register("name")}
                 />
                 {errors.name && (<p className="text-sm text-red-500">{errors.name.message}</p>)}
