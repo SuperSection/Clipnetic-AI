@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "./ui/badge";
 import { useRouter } from "next/navigation";
 import { formatDate } from "~/lib/utils";
+import { ClipDisplay } from "./clip-display";
 
 
 type DashboardClientProps = {
@@ -217,7 +218,19 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
           </Card>
         </TabsContent>
 
-        <TabsContent value="my-clips"></TabsContent>
+        <TabsContent value="my-clips">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Clips</CardTitle>
+              <CardDescription>
+                View and manage your generated clips here. Processing may take a few minutes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ClipDisplay clips={clips} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
