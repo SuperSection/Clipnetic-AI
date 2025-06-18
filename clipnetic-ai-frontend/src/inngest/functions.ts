@@ -3,6 +3,12 @@ import { inngest } from "./client";
 import { db } from '~/server/db';
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 
+
+type ProcessVideoEvent = {
+  uploadedFileId: string;
+  userId: string;
+}
+
 export const processVideo = inngest.createFunction(
   {
     id: "process-video",
@@ -16,7 +22,7 @@ export const processVideo = inngest.createFunction(
     event: "clipnetic-ai/process-video",
   },
   async ({ event, step }) => {
-    const { uploadedFileId } = event.data;
+    const { uploadedFileId } = event.data as ProcessVideoEvent;
 
     const { userId, credits, s3Key } = await step.run("check-credits", async () => {
       const uploadedFile = await db.uploadedFile.findUniqueOrThrow({

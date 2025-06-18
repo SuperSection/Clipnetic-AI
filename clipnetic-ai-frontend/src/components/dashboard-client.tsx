@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { generateUploadUrl } from "~/actions/s3";
 import { toast } from "sonner";
+import { processVideo } from "~/actions/generation";
 
 
 type DashboardClientProps = {
@@ -41,14 +42,12 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
     setUploading(true);
 
     try {
-      const { success, signedUrl, key, uploadedFileId } = await generateUploadUrl({
+      const { success, signedUrl, uploadedFileId } = await generateUploadUrl({
         filename: file.name,
         contentType: file.type,
       });
 
-      if (!success) {
-        throw new Error("Failed to get upload URL");
-      }
+      if (!success) throw new Error("Failed to get upload URL");
 
       const uploadResponse = await fetch(signedUrl, {
         method: "PUT",
@@ -62,12 +61,15 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
         throw new Error(`Upload file with status: ${uploadResponse.status}`);
       }
 
+      await processVideo(uploadedFileId);
+
       setFiles([]);
 
       toast.success("Video uploaded successfully", {
         description: "Your video has been scheduled for processing. Check the status below.",
         duration: 5000,
       });
+
     } catch (error) {
       toast.error("Upload failed", {
         description: "There was a problem uploading your video. Please try again.",

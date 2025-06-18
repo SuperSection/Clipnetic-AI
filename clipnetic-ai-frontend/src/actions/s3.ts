@@ -7,6 +7,7 @@ import { env } from "~/env";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 
+
 type FileInfo = {
   filename: string;
   contentType: string;
@@ -18,7 +19,6 @@ type GeneratedUploadUrlResponse = {
   key: string;
   uploadedFileId: string;
 }
-
 
 export async function generateUploadUrl(file: FileInfo): Promise<GeneratedUploadUrlResponse> {
   const session = await auth();
