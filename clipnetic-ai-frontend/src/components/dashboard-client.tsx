@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { generateUploadUrl } from "~/actions/s3";
 import { toast } from "sonner";
 import { processVideo } from "~/actions/generation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Badge } from "./ui/badge";
 
 
 type DashboardClientProps = {
@@ -147,11 +149,50 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
                   onClick={handleUpload}
                 >
                   {uploading ?
-                  <><Loader2 className="mr-2 w-4 h-4 animate-spin" />Uploading...</>
-                  : "Upload and Generate Clips"
+                    <><Loader2 className="mr-2 w-4 h-4 animate-spin" />Uploading...</>
+                    : "Upload and Generate Clips"
                   }
                 </Button>
               </div>
+
+              {uploadedFiles.length > 0 && (
+                <div className="pt-6">
+                  <h3 className="text-base mb-2 font-medium">Queue status</h3>
+                  <div className="max-h-[300px] overflow-auto rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>File</TableHead>
+                          <TableHead>Uploaded</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Clips created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {uploadedFiles.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="max-w-xs truncate font-medium">{item.filename}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{new Date(item.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              {item.status === "queued" && <Badge variant="outline">Queued</Badge>}
+                              {item.status === "processing" && <Badge variant="outline">Processing</Badge>}
+                              {item.status === "processed" && <Badge variant="outline">Processed</Badge>}
+                              {item.status === "no-credits" && <Badge variant="destructive">No Credits</Badge>}
+                              {item.status === "failed" && <Badge variant="destructive">Failed</Badge>}
+                            </TableCell>
+                            <TableCell>
+                              {item.clipsCount > 0 ?
+                                <span>{item.clipsCount} clip{item.clipsCount !== 1 ? "s" : ""}</span>
+                                : <span className="text-muted-foreground">No Clips yet</span>
+                              }
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
