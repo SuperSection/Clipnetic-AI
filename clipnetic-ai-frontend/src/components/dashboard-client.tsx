@@ -15,6 +15,7 @@ import { processVideo } from "~/actions/generation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Badge } from "./ui/badge";
 import { useRouter } from "next/navigation";
+import { formatDate } from "~/lib/utils";
 
 
 type DashboardClientProps = {
@@ -191,7 +192,7 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
                         {uploadedFiles.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell className="max-w-xs truncate font-medium">{item.filename}</TableCell>
-                            <TableCell className="text-muted-foreground text-sm">{new Date(item.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{formatDate(item.createdAt)}</TableCell>
                             <TableCell>
                               {item.status === "queued" && <Badge variant="outline">Queued</Badge>}
                               {item.status === "processing" && <Badge variant="outline">Processing</Badge>}
