@@ -23,7 +23,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
         <Link href="/dashboard" className="flex items-center">
           <div className="font-sans text-xl font-medium tracking-tight">
             <span className="text-foreground">clipnetic</span>
-            <span className="font-light text-gray-500">/</span>
+            <span className="font-medium text-gray-500 px-0.5">/</span>
             <span className="text-foreground font-light">AI</span>
           </div>
         </Link>
