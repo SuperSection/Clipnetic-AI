@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { processVideo } from "~/actions/generation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Badge } from "./ui/badge";
+import { useRouter } from "next/navigation";
 
 
 type DashboardClientProps = {
@@ -32,6 +33,15 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
 
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const router = useRouter();
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    router.refresh();
+    setTimeout(() => setRefreshing(false), 600);
+  }
 
   const handleDrop = (acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
@@ -131,7 +141,7 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
                 )}
               </Dropzone>
 
-              <div className="flex items-start justify-between mt-5">
+              <div className="flex items-start justify-between mt-4">
                 <div>
                   {files.length > 0 && (
                     <div className="space-y-1 text-sm">
@@ -157,7 +167,16 @@ export function DashboardClient({ uploadedFiles, clips }: DashboardClientProps) 
 
               {uploadedFiles.length > 0 && (
                 <div className="pt-6">
-                  <h3 className="text-base mb-2 font-medium">Queue status</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base mb-2 font-medium">Queue status</h3>
+                    <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+                      {refreshing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Refreshing
+                        </>
+                      ) : "Refresh"}
+                    </Button>
+                  </div>
                   <div className="max-h-[300px] overflow-auto rounded-md border">
                     <Table>
                       <TableHeader>
