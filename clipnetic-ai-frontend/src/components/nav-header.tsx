@@ -28,7 +28,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
           </div>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center sm:gap-4 gap-2">
           <div className="flex items-center gap-2">
             <Badge
               variant="secondary"
@@ -40,7 +40,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
               variant="outline"
               size="sm"
               asChild
-              className="h-8 text-xs font-medium"
+              className="h-8 text-xs font-medium hidden sm:flex"
             >
               <Link href="/dashboard/billing">Buy more</Link>
             </Button>
