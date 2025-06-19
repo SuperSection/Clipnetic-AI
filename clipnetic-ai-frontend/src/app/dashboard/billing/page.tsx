@@ -1,16 +1,17 @@
 "use client";
 
-import type { VariantProps } from "class-variance-authority";
-import { ArrowLeftIcon, CheckIcon, Loader2 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { PriceId, RazorpayOrderResponse, RazorpayResponse, RazorpayVerificationResponse } from "~/actions/razorpay";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { VariantProps } from "class-variance-authority";
+import { ArrowLeftIcon, CheckIcon, Loader2 } from "lucide-react";
+
 import { Button, type buttonVariants } from "~/components/ui/button";
+import type { PriceId, RazorpayOrderResponse, RazorpayResponse, RazorpayVerificationResponse } from "~/actions/razorpay";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
 import { env } from "~/env";
-import { redirect } from "next/navigation";
 
 
 interface PricingPlan {
@@ -73,6 +74,7 @@ const plans: PricingPlan[] = [
 
 function PricingCard({ plan }: { plan: PricingPlan }) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -105,7 +107,7 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
         throw new Error("Failed to create Razorpay order");
       }
 
-      const orderData: RazorpayOrderResponse = await response.json();
+      const orderData = await response.json() as RazorpayOrderResponse;
 
       const options = {
         key: env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
@@ -118,7 +120,7 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
           name: orderData.userName,
           email: orderData.userEmail,
         },
-        theme: { color: "#000000" },
+        theme: { color: "#000000", backdrop_color: "rgba(0, 0, 0, 0.6)", },
         handler: async function (response: RazorpayResponse) {
           try {
             const verifyRes = await fetch("/api/razorpay/verify", {
@@ -131,13 +133,15 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
               }),
             });
 
-            const result: RazorpayVerificationResponse = await verifyRes.json();
+            const result = await verifyRes.json() as RazorpayVerificationResponse;
 
             if (result.success) {
               toast.success("Payment successful!", {
                 description: `${result.credits} credits added to your account.`,
               });
-              redirect("/dashboard");
+              setTimeout(() => {
+                window.location.href = "/dashboard";
+              }, 2000);
             } else {
               toast.error("Payment verification failed");
             }
@@ -146,7 +150,12 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
           }
         },
         modal: {
+          backdropclose: true,
+          escape: true,
+          handleback: true,
+          confirm_close: true,
           ondismiss: () => setLoading(false),
+          animation: true,
         },
       };
 
