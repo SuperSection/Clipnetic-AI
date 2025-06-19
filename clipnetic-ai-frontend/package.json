@@ -47,7 +47,6 @@
     "react-hook-form": "^7.58.0",
     "shadcn-dropzone": "^0.2.1",
     "sonner": "^2.0.5",
-    "stripe": "^18.2.1",
     "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0",
     "zod": "^3.24.2"

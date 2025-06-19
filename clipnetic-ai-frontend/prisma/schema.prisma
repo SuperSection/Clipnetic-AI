@@ -61,7 +61,6 @@ model User {
     emailVerified    DateTime?
     password         String
     credits          Int       @default(10)
-    stripeCustomerId String?   @unique
     image            String?
     accounts         Account[]
     sessions         Session[]
