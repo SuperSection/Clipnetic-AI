@@ -21,7 +21,7 @@ Clipnetic-AI is an end-to-end SaaS platform that transforms long-form podcast vi
 - 🧠 LLM-powered viral moment identification with Gemini 2.5 Pro
 - 📊 Queue system with Inngest for handling user load
 - 💳 Credit-based system
-- 💰 Rezorpay integration for credit pack purchases
+- 💰 Razorpay integration for credit pack purchases
 - 👤 User authentication system
 - 📱 Responsive Next.js web interface
 - 🎛️ Dashboard to upload podcasts and see clips
