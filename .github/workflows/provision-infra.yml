@@ -9,7 +9,7 @@ env:
   ECR_REPOSITORY_NAME: clipnetic-ai-frontend
   EKS_CLUSTER_NAME: clipnetic-ai
   EKS_NODEGROUP_NAME: clipnetic-ai-nodes
-  K8S_VERSION: "1.31" # Or your desired Kubernetes version
+  K8S_VERSION: "1.32" # Or your desired Kubernetes version
 
 jobs:
   provision-infra:
@@ -142,11 +142,20 @@ jobs:
           set -euo pipefail
           echo "Verifying kubectl access for github-actions-user..."
 
-          MAX_RETRIES=5
-          RETRY_DELAY=15 # seconds
+          MAX_RETRIES=10 # Increased retries
+          RETRY_DELAY=20 # seconds - Increased delay
+
+          # First, ensure kubeconfig is up-to-date right before the checks
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+          # Give an initial longer pause if the cluster was just created (optional but can help)
+          # This if-condition would require knowing if the cluster was just created vs already existing.
+          # For simplicity, let's just rely on the retry loop.
+
           for i in $(seq 1 $MAX_RETRIES); do
               echo "Attempt $i/$MAX_RETRIES: Running kubectl auth can-i get deployments --as=github-actions-user..."
-              if kubectl auth can-i get deployments --as=github-actions-user; then
+              # Target a specific resource if possible, e.g., default namespace
+              if kubectl auth can-i get deployments -n default --as=github-actions-user; then
                   echo "SUCCESS: kubectl auth can-i check PASSED!"
                   exit 0
               else
