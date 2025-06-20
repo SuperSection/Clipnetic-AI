@@ -83,22 +83,22 @@ jobs:
             # The HERE-DOCUMENT starts here. 'EOF' must be exactly as written below,
             # with NO leading/trailing whitespace.
             cat <<EOF > cluster-config.yaml
-          apiVersion: eksctl.io/v1alpha5
-          kind: ClusterConfig
-          metadata:
-            name: ${{ env.EKS_CLUSTER_NAME }}
-            region: ${{ env.AWS_REGION }}
-            version: "${{ env.K8S_VERSION }}"
-          managedNodeGroups:
-            - name: ${{ env.EKS_NODEGROUP_NAME }}
-              instanceType: t3.medium # Choose an appropriate instance type
-              desiredCapacity: 2 # Number of worker nodes
-              minSize: 1
-              maxSize: 3
-              labels: {role: worker}
-              tags:
-                Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
-          EOF
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: ${{ env.EKS_CLUSTER_NAME }}
+  region: ${{ env.AWS_REGION }}
+  version: "${{ env.K8S_VERSION }}"
+managedNodeGroups:
+  - name: ${{ env.EKS_NODEGROUP_NAME }}
+    instanceType: t3.medium # Choose an appropriate instance type
+    desiredCapacity: 2 # Number of worker nodes
+    minSize: 1
+    maxSize: 3
+    labels: {role: worker}
+    tags:
+      Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
+EOF
             # The closing 'EOF' must be on a line by itself, with NO leading/trailing whitespace.
 
             eksctl create cluster -f cluster-config.yaml --wait # --wait ensures the command waits for creation to complete
@@ -107,8 +107,8 @@ jobs:
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
           fi
 
-      - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+          # Update kubeconfig to ensure kubectl can connect, regardless of whether it was just created
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Verify EKS Cluster and Nodes
         run: |
