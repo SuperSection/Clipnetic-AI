@@ -1,0 +1,124 @@
+name: Provision AWS Infrastructure
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+  # You might also trigger this on push to a specific branch, but manual is safer for infra creation
+
+env:
+  AWS_REGION: us-east-1 # Your desired AWS region
+  ECR_REPOSITORY_NAME: clipnetic-ai-frontent
+  EKS_CLUSTER_NAME: clipnetic-ai
+  EKS_NODEGROUP_NAME: clipnetic-ai-nodes
+  K8S_VERSION: "1.31" # Or your desired Kubernetes version
+
+jobs:
+  provision-infra:
+    runs-on: self-hosted # Use your self-hosted runner
+    environment: # Optional: Define an environment for better visibility/security
+      name: development
+      # url: https://your-eks-cluster-dashboard-url.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # - name: Configure AWS credentials (if not using EC2 instance profile)
+      #   # This step is only needed if your runner is NOT an EC2 instance
+      #   # If your runner is an EC2 instance with an attached IAM role, remove this block.
+      #   # This assumes you've manually set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as GitHub Secrets
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROVISIONER }} # Use a secret with high permissions
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROVISIONER }} # Use a secret with high permissions
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS CLI installation
+        run: aws --version
+
+      - name: Create ECR Repository
+        id: create_ecr
+        run: |
+          echo "Checking if ECR repository ${{ env.ECR_REPOSITORY_NAME }} exists..."
+          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY_NAME }} --region ${{ env.AWS_REGION }} || \
+          (
+            echo "ECR repository does not exist, creating..."
+            aws ecr create-repository \
+              --repository-name ${{ env.ECR_REPOSITORY_NAME }} \
+              --image-tag-mutability MUTABLE \
+              --image-scanning-configuration scanOnPush=true \
+              --region ${{ env.AWS_REGION }}
+            echo "ECR repository ${{ env.ECR_REPOSITORY_NAME }} created."
+          )
+          ECR_URI=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY_NAME }} --query "repositories[0].repositoryUri" --output text --region ${{ env.AWS_REGION }})
+          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+          echo "ECR repository URI: $ECR_URI"
+
+      - name: Create EKS Cluster
+        id: create_eks
+        run: |
+          echo "Checking if EKS cluster ${{ env.EKS_CLUSTER_NAME }} exists..."
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} && CLUSTER_EXISTS=true || CLUSTER_EXISTS=false
+
+          if [ "$CLUSTER_EXISTS" = false ]; then
+            echo "EKS cluster does not exist, creating with eksctl..."
+            # Create a basic cluster config file for eksctl
+            cat <<EOF > cluster-config.yaml
+            apiVersion: eksctl.io/v1alpha5
+            kind: ClusterConfig
+            metadata:
+              name: ${{ env.EKS_CLUSTER_NAME }}
+              region: ${{ env.AWS_REGION }}
+              version: "${{ env.K8S_VERSION }}"
+            managedNodeGroups:
+              - name: ${{ env.EKS_NODEGROUP_NAME }}
+                instanceType: t3.medium # Choose an appropriate instance type
+                desiredCapacity: 2 # Number of worker nodes
+                minSize: 1
+                maxSize: 3
+                labels: {role: worker}
+                tags:
+                  Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
+            EOF
+
+            eksctl create cluster -f cluster-config.yaml --wait # --wait ensures the command waits for creation to complete
+            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
+          else
+            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
+          fi
+
+          # Update kubeconfig to ensure kubectl can connect
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Verify EKS Cluster and Nodes
+        run: |
+          kubectl get nodes
+          kubectl get svc -n kube-system # Check for basic services
+
+      - name: Inject GitHub Actions IAM Role into EKS aws-auth ConfigMap
+        # This step updates the aws-auth ConfigMap to allow your GitHub Actions deployer role to interact with the cluster
+        run: |
+          # Replace 'github-actions-deployer-role-arn' with the actual ARN of the IAM role
+          # that your *deployment* workflow will assume.
+          # This is the role you set up previously with OIDC trust policy.
+          # Example: arn:aws:iam::123456789012:role/GitHubActionsECREKSRole
+          GITHUB_ACTIONS_DEPLOY_ROLE_ARN="arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsECREKSRole"
+
+          # Patch the aws-auth ConfigMap to add your GitHub Actions IAM role
+          # This grants cluster-admin access for now (system:masters)
+          # IMPORTANT: For production, replace system:masters with a more granular RBAC role.
+          kubectl get configmap -n kube-system aws-auth -o yaml | \
+            sed "/^data:/a \ \ mapRoles: |\n \ \ \ \ - rolearn: ${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}\n \ \ \ \ \ \ username: github-actions-user\n \ \ \ \ \ \ groups:\n \ \ \ \ \ \ \ \ - system:masters" | \
+            kubectl apply -f -
+
+          echo "Waiting for aws-auth ConfigMap changes to propagate..."
+          sleep 30 # Give EKS time to recognize the ConfigMap change
+
+      - name: Confirm GitHub Actions Role can access EKS
+        run: |
+          # This step uses the *current* runner's credentials to verify the mapping
+          # It won't switch to the 'GitHubActionsECREKSRole' directly in this workflow step,
+          # but it confirms the ConfigMap patch was successful.
+          kubectl auth can-i get deployments --as=github-actions-user # Should be 'yes'
+
+      - name: Output ECR Repository URI
+        run: echo "::notice::ECR Repository URI: ${{ env.ECR_URI }}"
