@@ -70,27 +70,37 @@ jobs:
         id: create_eks
         run: |
           echo "Checking if EKS cluster ${{ env.EKS_CLUSTER_NAME }} exists..."
-          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} && CLUSTER_EXISTS=true || CLUSTER_EXISTS=false
+          # The `|| true` makes the `aws eks describe-cluster` command not fail the step
+          # if the cluster is not found, allowing the script to continue.
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || true
 
-          if [ "$CLUSTER_EXISTS" = false ]; then
+          # Use an if-condition to check the exit code of the previous command
+          # $? holds the exit code of the last command. 0 for success, non-zero for failure.
+          # ResourceNotFoundException usually gives exit code 255.
+          if [ $? -ne 0 ]; then # If the previous command (describe-cluster) failed (cluster not found)
             echo "EKS cluster does not exist, creating with eksctl..."
+
+            # The HERE-DOCUMENT starts here. 'EOF' must be exactly as written below,
+            # with NO leading/trailing whitespace.
             cat <<EOF > cluster-config.yaml
-          apiVersion: eksctl.io/v1alpha5
-          kind: ClusterConfig
-          metadata:
-            name: ${{ env.EKS_CLUSTER_NAME }}
-            region: ${{ env.AWS_REGION }}
-            version: "${{ env.K8S_VERSION }}"
-          managedNodeGroups:
-            - name: ${{ env.EKS_NODEGROUP_NAME }}
-              instanceType: t3.medium
-              desiredCapacity: 2
-              minSize: 1
-              maxSize: 3
-              labels: {role: worker}
-              tags:
-                Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
-          EOF
+            apiVersion: eksctl.io/v1alpha5
+            kind: ClusterConfig
+            metadata:
+              name: ${{ env.EKS_CLUSTER_NAME }}
+              region: ${{ env.AWS_REGION }}
+              version: "${{ env.K8S_VERSION }}"
+            managedNodeGroups:
+              - name: ${{ env.EKS_NODEGROUP_NAME }}
+                instanceType: t3.medium # Choose an appropriate instance type
+                desiredCapacity: 2 # Number of worker nodes
+                minSize: 1
+                maxSize: 3
+                labels: {role: worker}
+                tags:
+                  Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
+            EOF
+            # The closing 'EOF' must be on a line by itself, with NO leading/trailing whitespace.
+
             eksctl create cluster -f cluster-config.yaml --wait # --wait ensures the command waits for creation to complete
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
           else
