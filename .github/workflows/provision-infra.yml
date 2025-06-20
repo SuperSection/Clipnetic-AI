@@ -69,42 +69,41 @@ jobs:
       - name: Create EKS Cluster
         id: create_eks
         run: |
-          echo "Checking if EKS cluster ${{ env.EKS_CLUSTER_NAME }} exists..."
-          # The `|| true` makes the `aws eks describe-cluster` command not fail the step
-          # if the cluster is not found, allowing the script to continue.
-          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || true
+          set -euo pipefail
 
-          # Use an if-condition to check the exit code of the previous command
-          # $? holds the exit code of the last command. 0 for success, non-zero for failure.
-          # ResourceNotFoundException usually gives exit code 255.
-          if [ $? -ne 0 ]; then # If the previous command (describe-cluster) failed (cluster not found)
+          echo "Checking if EKS cluster ${{ env.EKS_CLUSTER_NAME }} exists..."
+          if aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
+          else
             echo "EKS cluster does not exist, creating with eksctl..."
 
-            # The HERE-DOCUMENT starts here. 'EOF' must be exactly as written below,
-            # with NO leading/trailing whitespace.
-            cat <<EOF > cluster-config.yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: ${{ env.EKS_CLUSTER_NAME }}
-  region: ${{ env.AWS_REGION }}
-  version: "${{ env.K8S_VERSION }}"
-managedNodeGroups:
-  - name: ${{ env.EKS_NODEGROUP_NAME }}
-    instanceType: t3.medium # Choose an appropriate instance type
-    desiredCapacity: 2 # Number of worker nodes
-    minSize: 1
-    maxSize: 3
-    labels: {role: worker}
-    tags:
-      Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
-EOF
-            # The closing 'EOF' must be on a line by itself, with NO leading/trailing whitespace.
+            # Create the eksctl config file using yq for robust YAML generation
+            # Start with an empty YAML file
+            touch cluster-config.yaml
 
-            eksctl create cluster -f cluster-config.yaml --wait # --wait ensures the command waits for creation to complete
+            # Set top-level fields
+            yq e '.apiVersion = "eksctl.io/v1alpha5"' -i cluster-config.yaml
+            yq e '.kind = "ClusterConfig"' -i cluster-config.yaml
+
+            # Set metadata fields
+            yq e '.metadata.name = "${{ env.EKS_CLUSTER_NAME }}"' -i cluster-config.yaml
+            yq e '.metadata.region = "${{ env.AWS_REGION }}"' -i cluster-config.yaml
+            yq e '.metadata.version = "${{ env.K8S_VERSION }}"' -i cluster-config.yaml
+
+            # Add managedNodeGroups array and its first element
+            yq e '.managedNodeGroups[0].name = "${{ env.EKS_NODEGROUP_NAME }}"' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].instanceType = "t3.medium"' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].desiredCapacity = 2' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].minSize = 1' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].maxSize = 3' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].labels.role = "worker"' -i cluster-config.yaml
+            yq e '.managedNodeGroups[0].tags.Name = "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"' -i cluster-config.yaml
+
+            echo "Generated cluster-config.yaml:"
+            cat cluster-config.yaml # Print for debugging
+
+            eksctl create cluster -f cluster-config.yaml --wait
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
-          else
-            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
           fi
 
           # Update kubeconfig to ensure kubectl can connect, regardless of whether it was just created
@@ -147,6 +146,8 @@ EOF
 
       - name: Confirm GitHub Actions Role can access EKS
         run: |
+          set -euo pipefail
+          echo "Verifying kubectl access for github-actions-user..."
           # This step uses the *current* runner's credentials to verify the mapping
           # It won't switch to the 'GitHubActionsECREKSRole' directly in this workflow step,
           # but it confirms the ConfigMap patch was successful.
