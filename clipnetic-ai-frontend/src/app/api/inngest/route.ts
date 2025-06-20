@@ -6,4 +6,7 @@ import { processVideo } from "~/inngest/functions";
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [processVideo],
+  // signingKey: env.INNGEST_SIGNING_KEY,
+  // serveHost: env.INNGEST_SERVE_HOST ?? "localhost:3000",
+  // servePath: env.INNGEST_SERVE_PATH ?? "/api/inngest",
 });

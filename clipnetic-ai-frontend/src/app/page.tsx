@@ -13,7 +13,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <header className="bg-background border-b">
+      <header className="bg-background border-b sticky top-0 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 py-2">
           <div className="font-sans text-xl font-medium tracking-tight">
             <span className="text-foreground">clipnetic</span>

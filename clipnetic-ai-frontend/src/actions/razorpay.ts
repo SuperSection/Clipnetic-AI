@@ -15,12 +15,6 @@ const PACKAGE_CONFIG = {
   large: { credits: 500, amount: 35999 }, // ₹359.99
 } as const;
 
-// Initialize Razorpay instance with your credentials
-const razorpay = new Razorpay({
-  key_id: env.RAZORPAY_KEY_ID,
-  key_secret: env.RAZORPAY_SECRET_KEY,
-});
-
 export interface RazorpayResponse {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -57,6 +51,12 @@ export async function createRazorpayOrder(
   const user = await db.user.findUniqueOrThrow({
     where: { id: session.user.id },
     select: { email: true, name: true },
+  });
+
+  // Initialize Razorpay instance with your credentials
+  const razorpay = new Razorpay({
+    key_id: env.RAZORPAY_KEY_ID,
+    key_secret: env.RAZORPAY_SECRET_KEY,
   });
 
   const order = await razorpay.orders.create({
@@ -98,6 +98,12 @@ export async function verifyPayment(
   if (expectedSignature !== signature) {
     throw new Error("Invalid payment signature");
   }
+
+  // Initialize Razorpay instance with your credentials
+  const razorpay = new Razorpay({
+    key_id: env.RAZORPAY_KEY_ID,
+    key_secret: env.RAZORPAY_SECRET_KEY,
+  });
 
   // Get order details from Razorpay
   const order = await razorpay.orders.fetch(orderId);
