@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-east-1 # Your desired AWS region
-  ECR_REPOSITORY_NAME: clipnetic-ai-frontent
+  ECR_REPOSITORY_NAME: clipnetic-ai-frontend
   EKS_CLUSTER_NAME: clipnetic-ai
   EKS_NODEGROUP_NAME: clipnetic-ai-nodes
   K8S_VERSION: "1.31" # Or your desired Kubernetes version
@@ -72,38 +72,31 @@ jobs:
           set -euo pipefail
 
           echo "Checking if EKS cluster ${{ env.EKS_CLUSTER_NAME }} exists..."
-          if aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
-            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
-          else
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} && CLUSTER_EXISTS=true || CLUSTER_EXISTS=false
+
+          if [ "$CLUSTER_EXISTS" = false ]; then
             echo "EKS cluster does not exist, creating with eksctl..."
-
-            # Create the eksctl config file using yq for robust YAML generation
-            # Start with an empty YAML file
-            touch cluster-config.yaml
-
-            # Set top-level fields
-            yq e '.apiVersion = "eksctl.io/v1alpha5"' -i cluster-config.yaml
-            yq e '.kind = "ClusterConfig"' -i cluster-config.yaml
-
-            # Set metadata fields
-            yq e '.metadata.name = "${{ env.EKS_CLUSTER_NAME }}"' -i cluster-config.yaml
-            yq e '.metadata.region = "${{ env.AWS_REGION }}"' -i cluster-config.yaml
-            yq e '.metadata.version = "${{ env.K8S_VERSION }}"' -i cluster-config.yaml
-
-            # Add managedNodeGroups array and its first element
-            yq e '.managedNodeGroups[0].name = "${{ env.EKS_NODEGROUP_NAME }}"' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].instanceType = "t3.medium"' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].desiredCapacity = 2' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].minSize = 1' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].maxSize = 3' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].labels.role = "worker"' -i cluster-config.yaml
-            yq e '.managedNodeGroups[0].tags.Name = "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"' -i cluster-config.yaml
-
-            echo "Generated cluster-config.yaml:"
-            cat cluster-config.yaml # Print for debugging
-
+            cat <<EOF > cluster-config.yaml
+          apiVersion: eksctl.io/v1alpha5
+          kind: ClusterConfig
+          metadata:
+            name: ${{ env.EKS_CLUSTER_NAME }}
+            region: ${{ env.AWS_REGION }}
+            version: "${{ env.K8S_VERSION }}"
+          managedNodeGroups:
+            - name: ${{ env.EKS_NODEGROUP_NAME }}
+              instanceType: t3.medium
+              desiredCapacity: 2
+              minSize: 1
+              maxSize: 3
+              labels: {role: worker}
+              tags:
+                Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
+          EOF
             eksctl create cluster -f cluster-config.yaml
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
+          else
+            echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
           fi
 
           # Update kubeconfig to ensure kubectl can connect, regardless of whether it was just created
