@@ -132,17 +132,25 @@ jobs:
             --verbose 4 # Add verbose flag for more debug info in the logs
 
           echo "eksctl command executed. Waiting for aws-auth ConfigMap changes to propagate..."
-          sleep 60 # **INCREASED SLEEP TO 60 SECONDS** - This is often the key!
+          sleep 30
 
           echo "Current aws-auth ConfigMap content:"
           kubectl get configmap aws-auth -n kube-system -o yaml || echo "Failed to get aws-auth ConfigMap. This may be a propagation delay or permission issue."
+
+      - name: Create ClusterRoleBinding for GitHub Actions User
+        run: |
+          set -euo pipefail
+          echo "Creating ClusterRoleBinding for GitHub Actions user..."
+          kubectl create clusterrolebinding github-actions-admin \
+            --clusterrole=cluster-admin \
+            --user=github-actions-user
 
       - name: Confirm GitHub Actions Role can access EKS (with retries)
         run: |
           set -euo pipefail
           echo "Verifying kubectl access for github-actions-user..."
 
-          MAX_RETRIES=10 # Increased retries
+          MAX_RETRIES=5
           RETRY_DELAY=20 # seconds - Increased delay
 
           # First, ensure kubeconfig is up-to-date right before the checks
