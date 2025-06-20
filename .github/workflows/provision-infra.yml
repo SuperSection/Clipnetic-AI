@@ -102,7 +102,7 @@ jobs:
             echo "Generated cluster-config.yaml:"
             cat cluster-config.yaml # Print for debugging
 
-            eksctl create cluster -f cluster-config.yaml --wait
+            eksctl create cluster -f cluster-config.yaml
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
           fi
 
