@@ -69,7 +69,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
+          <CardTitle className="text-lg">Create an account</CardTitle>
           <CardDescription>
             We&apos;re glad to have you on Clipnetic AI
           </CardDescription>

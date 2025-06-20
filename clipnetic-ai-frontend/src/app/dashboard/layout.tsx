@@ -6,7 +6,7 @@ import { Toaster } from "~/components/ui/sonner";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 
-export default async function DashbpardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();

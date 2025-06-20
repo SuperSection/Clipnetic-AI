@@ -60,7 +60,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle className="text-lg">Login to your account</CardTitle>
           <CardDescription>Welcome back to Clipnetic AI</CardDescription>
         </CardHeader>
         <CardContent>
