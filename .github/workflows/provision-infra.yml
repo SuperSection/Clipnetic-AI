@@ -131,5 +131,5 @@ jobs:
           # but it confirms the ConfigMap patch was successful.
           kubectl auth can-i get deployments --as=github-actions-user # Should be 'yes'
 
-      - name: Output ECR Repository URI
-        run: echo "::notice::ECR Repository URI: ${{ env.ECR_URI }}"
+      # - name: Output ECR Repository URI
+      #   run: echo "::notice::ECR Repository URI: ${{ env.ECR_URI }}"
