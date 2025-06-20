@@ -53,6 +53,14 @@ jobs:
           echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
           echo "ECR repository URI: $ECR_URI"
 
+      - name: Replace env vars in cluster config
+        run: |
+          sed -e "s/CLUSTER_NAME/${{ env.EKS_CLUSTER_NAME }}/g" \
+              -e "s/REGION/${{ env.AWS_REGION }}/g" \
+              -e "s/K8S_VERSION/${{ env.K8S_VERSION }}/g" \
+              -e "s/NODEGROUP_NAME/${{ env.EKS_NODEGROUP_NAME }}/g" \
+              .github/eks/cluster-config.yaml > cluster-config.yaml
+
       - name: Create EKS Cluster
         id: create_eks
         run: |
@@ -61,33 +69,14 @@ jobs:
 
           if [ "$CLUSTER_EXISTS" = false ]; then
             echo "EKS cluster does not exist, creating with eksctl..."
-            # Create a basic cluster config file for eksctl
-            cat <<EOF > cluster-config.yaml
-            apiVersion: eksctl.io/v1alpha5
-            kind: ClusterConfig
-            metadata:
-              name: ${{ env.EKS_CLUSTER_NAME }}
-              region: ${{ env.AWS_REGION }}
-              version: "${{ env.K8S_VERSION }}"
-            managedNodeGroups:
-              - name: ${{ env.EKS_NODEGROUP_NAME }}
-                instanceType: t3.medium # Choose an appropriate instance type
-                desiredCapacity: 2 # Number of worker nodes
-                minSize: 1
-                maxSize: 3
-                labels: {role: worker}
-                tags:
-                  Name: "${{ env.EKS_CLUSTER_NAME }}-${{ env.EKS_NODEGROUP_NAME }}"
-            EOF
-
             eksctl create cluster -f cluster-config.yaml --wait # --wait ensures the command waits for creation to complete
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} created."
           else
             echo "EKS cluster ${{ env.EKS_CLUSTER_NAME }} already exists, skipping creation."
           fi
 
-          # Update kubeconfig to ensure kubectl can connect
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Verify EKS Cluster and Nodes
         run: |
