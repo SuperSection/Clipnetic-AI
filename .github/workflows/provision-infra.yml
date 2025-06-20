@@ -108,43 +108,54 @@ jobs:
           kubectl get svc -n kube-system # Check for basic services
 
       - name: Inject GitHub Actions IAM Role into EKS aws-auth ConfigMap
-        # This step updates the aws-auth ConfigMap to allow your GitHub Actions deployer role to interact with the cluster
+        # Use eksctl create iamidentitymapping for robustness
         run: |
-          # Replace 'github-actions-deployer-role-arn' with the actual ARN of the IAM role
-          # that your *deployment* workflow will assume.
-          # This is the role you set up previously with OIDC trust policy.
-          # Example: arn:aws:iam::123456789012:role/GitHubActionsECREKSRole
+          set -euo pipefail
+
+          # Validate AWS_ACCOUNT_ID for debug purposes
+          if [ -z "${{ secrets.AWS_ACCOUNT_ID }}" ]; then
+              echo "Error: AWS_ACCOUNT_ID secret is not set! Cannot construct IAM role ARN."
+              exit 1
+          fi
+
           GITHUB_ACTIONS_DEPLOY_ROLE_ARN="arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsECREKSRole"
 
-          # Patch the aws-auth ConfigMap to add your GitHub Actions IAM role
-          # This grants cluster-admin access for now (system:masters)
-          # IMPORTANT: For production, replace system:masters with a more granular RBAC role.
-          # kubectl get configmap -n kube-system aws-auth -o yaml | \
-          #   sed "/^data:/a \ \ mapRoles: |\n \ \ \ \ - rolearn: ${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}\n \ \ \ \ \ \ username: github-actions-user\n \ \ \ \ \ \ groups:\n \ \ \ \ \ \ \ \ - system:masters" | \
-          #   kubectl apply -f -
+          echo "Attempting to inject IAM role '${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}' into EKS aws-auth ConfigMap..."
 
-          # eksctl create iamidentitymapping will add the role to aws-auth if it doesn't exist,
-          # or update it if it does.
-          # The --no-duplicate-arns is important to prevent errors if you run this multiple times.
           eksctl create iamidentitymapping \
             --cluster ${{ env.EKS_CLUSTER_NAME }} \
             --region ${{ env.AWS_REGION }} \
             --arn "${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}" \
             --username github-actions-user \
             --group system:masters \
-            --no-duplicate-arns
+            --no-duplicate-arns \
+            --verbose 4 # Add verbose flag for more debug info in the logs
 
-          echo "Waiting for aws-auth ConfigMap changes to propagate..."
-          sleep 30 # Give EKS time to recognize the ConfigMap change
+          echo "eksctl command executed. Waiting for aws-auth ConfigMap changes to propagate..."
+          sleep 60 # **INCREASED SLEEP TO 60 SECONDS** - This is often the key!
 
-      - name: Confirm GitHub Actions Role can access EKS
+          echo "Current aws-auth ConfigMap content:"
+          kubectl get configmap aws-auth -n kube-system -o yaml || echo "Failed to get aws-auth ConfigMap. This may be a propagation delay or permission issue."
+
+      - name: Confirm GitHub Actions Role can access EKS (with retries)
         run: |
           set -euo pipefail
           echo "Verifying kubectl access for github-actions-user..."
-          # This step uses the *current* runner's credentials to verify the mapping
-          # It won't switch to the 'GitHubActionsECREKSRole' directly in this workflow step,
-          # but it confirms the ConfigMap patch was successful.
-          kubectl auth can-i get deployments --as=github-actions-user # Should be 'yes'
+
+          MAX_RETRIES=5
+          RETRY_DELAY=15 # seconds
+          for i in $(seq 1 $MAX_RETRIES); do
+              echo "Attempt $i/$MAX_RETRIES: Running kubectl auth can-i get deployments --as=github-actions-user..."
+              if kubectl auth can-i get deployments --as=github-actions-user; then
+                  echo "SUCCESS: kubectl auth can-i check PASSED!"
+                  exit 0
+              else
+                  echo "FAILED: kubectl auth can-i check returned 'no'. Retrying in $RETRY_DELAY seconds..."
+                  sleep $RETRY_DELAY
+              fi
+          done
+          echo "ERROR: kubectl auth can-i check FAILED after $MAX_RETRIES attempts."
+          exit 1 # Explicitly fail the step if all retries fail
 
       # - name: Output ECR Repository URI
       #   run: echo "::notice::ECR Repository URI: ${{ env.ECR_URI }}"
