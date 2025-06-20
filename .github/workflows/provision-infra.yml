@@ -38,18 +38,31 @@ jobs:
       - name: Create ECR Repository
         id: create_ecr
         run: |
-          echo "Checking if ECR repository ${{ env.ECR_REPOSITORY_NAME }} exists..."
-          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY_NAME }} --region ${{ env.AWS_REGION }} || \
-          (
-            echo "ECR repository does not exist, creating..."
+          set -euo pipefail
+
+          echo "Checking if ECR repository '${{ env.ECR_REPOSITORY_NAME }}' exists..."
+
+          if aws ecr describe-repositories \
+              --repository-names "${{ env.ECR_REPOSITORY_NAME }}" \
+              --region "${{ env.AWS_REGION }}" > /dev/null 2>&1; then
+            echo "ECR repository already exists."
+          else
+            echo "ECR repository does not exist. Creating..."
             aws ecr create-repository \
-              --repository-name ${{ env.ECR_REPOSITORY_NAME }} \
+              --repository-name "${{ env.ECR_REPOSITORY_NAME }}" \
               --image-tag-mutability MUTABLE \
               --image-scanning-configuration scanOnPush=true \
-              --region ${{ env.AWS_REGION }}
-            echo "ECR repository ${{ env.ECR_REPOSITORY_NAME }} created."
-          )
-          ECR_URI=$(aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY_NAME }} --query "repositories[0].repositoryUri" --output text --region ${{ env.AWS_REGION }})
+              --region "${{ env.AWS_REGION }}"
+            echo "ECR repository created successfully."
+          fi
+
+          # Fetch and export ECR URI
+          ECR_URI=$(aws ecr describe-repositories \
+            --repository-names "${{ env.ECR_REPOSITORY_NAME }}" \
+            --query "repositories[0].repositoryUri" \
+            --output text \
+            --region "${{ env.AWS_REGION }}")
+
           echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
           echo "ECR repository URI: $ECR_URI"
 
