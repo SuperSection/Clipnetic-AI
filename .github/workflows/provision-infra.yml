@@ -9,7 +9,7 @@ env:
   ECR_REPOSITORY_NAME: clipnetic-ai-frontend
   EKS_CLUSTER_NAME: clipnetic-ai
   EKS_NODEGROUP_NAME: clipnetic-ai-nodes
-  K8S_VERSION: "1.32" # Or your desired Kubernetes version
+  K8S_VERSION: "1.29" # Or your desired Kubernetes version
 
 jobs:
   provision-infra:
