@@ -3,16 +3,23 @@
 import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { signOut } from "next-auth/react";
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 type NavHeaderProps = {
   credits: number;
   email: string;
-}
+};
 
 const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
   const { setTheme } = useTheme();
@@ -23,12 +30,12 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
         <Link href="/dashboard" className="flex items-center">
           <div className="font-sans text-xl font-medium tracking-tight">
             <span className="text-foreground">clipnetic</span>
-            <span className="font-medium text-gray-500 px-0.5">/</span>
+            <span className="px-0.5 font-medium text-gray-500">/</span>
             <span className="text-foreground font-light">AI</span>
           </div>
         </Link>
 
-        <div className="flex items-center sm:gap-4 gap-2">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
             <Badge
               variant="secondary"
@@ -40,7 +47,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
               variant="outline"
               size="sm"
               asChild
-              className="h-8 text-xs font-medium hidden sm:flex"
+              className="hidden h-8 text-xs font-medium sm:flex"
             >
               <Link href="/dashboard/billing">Buy more</Link>
             </Button>
@@ -48,9 +55,14 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full p-0"
+              >
                 <Avatar>
-                  <AvatarFallback>{email.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>
+                    {email.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -96,6 +108,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ credits, email }) => {
       </div>
     </header>
   );
-}
+};
 
 export default NavHeader;

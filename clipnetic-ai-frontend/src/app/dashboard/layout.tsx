@@ -8,8 +8,7 @@ import { db } from "~/server/db";
 
 export default async function DashbpardLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>
-) {
+}: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
 
   if (!session?.user.id) {
@@ -21,16 +20,16 @@ export default async function DashbpardLayout({
       id: session.user.id,
     },
     select: {
-      credits: true, email: true,
+      credits: true,
+      email: true,
     },
   });
 
-  return <div className="flex min-h-screen flex-col">
-    <NavHeader credits={user.credits} email={user.email} />
-    <main className="container mx-auto flex-1 py-6">
-      {children}
-    </main>
-    <Toaster />
-  </div>
-
+  return (
+    <div className="flex min-h-screen flex-col">
+      <NavHeader credits={user.credits} email={user.email} />
+      <main className="container mx-auto flex-1 py-6">{children}</main>
+      <Toaster />
+    </div>
+  );
 }

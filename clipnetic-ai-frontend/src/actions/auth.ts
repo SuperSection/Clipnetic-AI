@@ -7,7 +7,7 @@ import { db } from "~/server/db";
 type SignupResponse = {
   success: boolean;
   error?: string;
-}
+};
 
 export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
   const validationResult = signupSchema.safeParse(data);
@@ -27,7 +27,7 @@ export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
       return {
         success: false,
         error: "Email already in use",
-      }
+      };
     }
 
     const hashedPassword = await hashPassword(password);
@@ -38,11 +38,10 @@ export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
         email,
         password: hashedPassword,
         credits: 10,
-      }
+      },
     });
 
     return { success: true };
-
   } catch (error) {
     return {
       success: false,

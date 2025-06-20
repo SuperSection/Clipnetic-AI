@@ -53,8 +53,7 @@ export default async function DashboardPage() {
     createdAt: file.createdAt,
   }));
 
-  return <DashboardClient
-    uploadedFiles={formattedFiles}
-    clips={userData.clips}
-  />;
+  return (
+    <DashboardClient uploadedFiles={formattedFiles} clips={userData.clips} />
+  );
 }

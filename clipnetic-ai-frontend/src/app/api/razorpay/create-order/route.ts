@@ -3,7 +3,7 @@ import { createRazorpayOrder, type PriceId } from "~/actions/razorpay";
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId } = await request.json() as { priceId: PriceId };
+    const { priceId } = (await request.json()) as { priceId: PriceId };
 
     const orderData = await createRazorpayOrder(priceId);
 
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating Razorpay order:", error);
     return NextResponse.json(
       { error: "Failed to create order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

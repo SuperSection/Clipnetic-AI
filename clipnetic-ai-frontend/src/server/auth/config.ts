@@ -60,7 +60,7 @@ export const authConfig = {
 
         return user;
       },
-    })
+    }),
   ],
   session: { strategy: "jwt" },
   adapter: PrismaAdapter(db),
@@ -77,6 +77,6 @@ export const authConfig = {
         token.id = user.id;
       }
       return token;
-    }
+    },
   },
 } satisfies NextAuthConfig;

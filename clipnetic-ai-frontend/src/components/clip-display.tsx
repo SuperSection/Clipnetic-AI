@@ -6,13 +6,11 @@ import { useEffect, useState } from "react";
 import { getClipPlayUrl } from "~/actions/generation";
 import { Button } from "./ui/button";
 
-
 type ClipDisplayProps = {
   clips: Clip[];
-}
+};
 
 export function ClipDisplay({ clips }: ClipDisplayProps) {
-
   if (clips.length === 0) {
     return (
       <p className="text-muted-foreground p-4 text-center">
@@ -29,7 +27,6 @@ export function ClipDisplay({ clips }: ClipDisplayProps) {
     </div>
   );
 }
-
 
 function ClipCard({ clip }: { clip: Clip }) {
   const [playUrl, setPlayUrl] = useState<string | null>(null);
@@ -65,7 +62,7 @@ function ClipCard({ clip }: { clip: Clip }) {
       link.click();
       document.body.removeChild(link);
     }
-  }
+  };
 
   return (
     <div className="flex max-w-52 flex-col gap-2">

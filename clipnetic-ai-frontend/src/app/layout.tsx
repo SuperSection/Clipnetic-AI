@@ -28,9 +28,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <RazorpayProvider>
-            {children}
-          </RazorpayProvider>
+          <RazorpayProvider>{children}</RazorpayProvider>
         </ThemeProvider>
       </body>
     </html>

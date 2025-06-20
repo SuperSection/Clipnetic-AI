@@ -20,7 +20,6 @@ import { signUp } from "~/actions/auth";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-
 export function SignupForm({
   className,
   ...props
@@ -32,7 +31,7 @@ export function SignupForm({
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<SignupFormValues>({ resolver: zodResolver(signupSchema) });
 
   const onSubmit = async (data: SignupFormValues) => {
@@ -53,16 +52,18 @@ export function SignupForm({
       });
 
       if (signUpResult?.error) {
-        setError("Account created but couldn't sign in automatically. Please try again.");
+        setError(
+          "Account created but couldn't sign in automatically. Please try again.",
+        );
       } else {
         router.push("/dashboard");
       }
     } catch (error) {
-      setError("Failed to sign you up!")
+      setError("Failed to sign you up!");
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -84,7 +85,9 @@ export function SignupForm({
                   placeholder="Your full name"
                   {...register("name")}
                 />
-                {errors.name && (<p className="text-sm text-red-500">{errors.name.message}</p>)}
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
               </div>
 
               <div className="grid gap-3">
@@ -96,7 +99,9 @@ export function SignupForm({
                   required
                   {...register("email")}
                 />
-                {errors.email && (<p className="text-sm text-red-500">{errors.email.message}</p>)}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="grid gap-3">
@@ -107,17 +112,25 @@ export function SignupForm({
                   required
                   {...register("password")}
                 />
-                {errors.password && (<p className="text-sm text-red-500">{errors.password.message}</p>)}
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {error && (
-                <p className="rounded-md p-3 bg-red-50 text-sm text-red-500">
+                <p className="rounded-md bg-red-50 p-3 text-sm text-red-500">
                   {error}
                 </p>
               )}
 
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Signing up..." : "Sign up"}
                 </Button>
               </div>
@@ -132,5 +145,5 @@ export function SignupForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -7,20 +7,21 @@ import { env } from "~/env";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 
-
 type FileInfo = {
   filename: string;
   contentType: string;
-}
+};
 
 type GeneratedUploadUrlResponse = {
   success: boolean;
   signedUrl: string;
   key: string;
   uploadedFileId: string;
-}
+};
 
-export async function generateUploadUrl(file: FileInfo): Promise<GeneratedUploadUrlResponse> {
+export async function generateUploadUrl(
+  file: FileInfo,
+): Promise<GeneratedUploadUrlResponse> {
   const session = await auth();
   if (!session) throw new Error("Unathorized");
 
@@ -44,7 +45,7 @@ export async function generateUploadUrl(file: FileInfo): Promise<GeneratedUpload
   });
 
   const signedUrl = await getSignedUrl(s3Client, command, {
-    expiresIn: 600
+    expiresIn: 600,
   });
 
   const uploadedFileDbRecord = await db.uploadedFile.create({
@@ -64,5 +65,5 @@ export async function generateUploadUrl(file: FileInfo): Promise<GeneratedUpload
     signedUrl,
     key,
     uploadedFileId: uploadedFileDbRecord.id,
-  }
+  };
 }

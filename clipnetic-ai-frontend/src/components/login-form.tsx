@@ -19,7 +19,6 @@ import { loginSchema, type LoginFormValues } from "~/schemas/auth";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-
 export function LoginForm({
   className,
   ...props
@@ -31,7 +30,7 @@ export function LoginForm({
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -51,20 +50,18 @@ export function LoginForm({
         router.push("/dashboard");
       }
     } catch (error) {
-      setError("Failed to log you in!")
+      setError("Failed to log you in!");
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Welcome back to Clipnetic AI
-          </CardDescription>
+          <CardDescription>Welcome back to Clipnetic AI</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -78,7 +75,9 @@ export function LoginForm({
                   required
                   {...register("email")}
                 />
-                {errors.email && (<p className="text-sm text-red-500">{errors.email.message}</p>)}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="grid gap-3">
@@ -89,17 +88,25 @@ export function LoginForm({
                   required
                   {...register("password")}
                 />
-                {errors.password && (<p className="text-sm text-red-500">{errors.password.message}</p>)}
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {error && (
-                <p className="rounded-md p-3 bg-red-50 text-sm text-red-500">
+                <p className="rounded-md bg-red-50 p-3 text-sm text-red-500">
                   {error}
                 </p>
               )}
 
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Logging in..." : "Log in"}
                 </Button>
               </div>
@@ -114,5 +121,5 @@ export function LoginForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

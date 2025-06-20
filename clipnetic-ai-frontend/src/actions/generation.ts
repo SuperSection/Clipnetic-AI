@@ -8,7 +8,6 @@ import { inngest } from "~/inngest/client";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
 
-
 export async function processVideo(uploadedFileId: string) {
   const uploadedVideo = await db.uploadedFile.findUniqueOrThrow({
     where: {
@@ -33,7 +32,7 @@ export async function processVideo(uploadedFileId: string) {
 
   await db.uploadedFile.update({
     where: {
-      id: uploadedVideo.id
+      id: uploadedVideo.id,
     },
     data: {
       uploaded: true,
@@ -43,14 +42,15 @@ export async function processVideo(uploadedFileId: string) {
   revalidatePath("/dashboard");
 }
 
-
 type ClipPlayUrlResponse = {
   success: boolean;
   url?: string;
   error?: string;
-}
+};
 
-export async function getClipPlayUrl(clipId: string): Promise<ClipPlayUrlResponse> {
+export async function getClipPlayUrl(
+  clipId: string,
+): Promise<ClipPlayUrlResponse> {
   const session = await auth();
   if (!session?.user.id) {
     return {
@@ -88,7 +88,6 @@ export async function getClipPlayUrl(clipId: string): Promise<ClipPlayUrlRespons
       success: true,
       url: signedUrl,
     };
-
   } catch (error) {
     return {
       success: false,

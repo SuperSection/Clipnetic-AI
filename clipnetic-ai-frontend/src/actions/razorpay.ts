@@ -7,7 +7,6 @@ import { env } from "~/env";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 
-
 export type PriceId = "small" | "medium" | "large";
 
 const PACKAGE_CONFIG = {
@@ -16,13 +15,11 @@ const PACKAGE_CONFIG = {
   large: { credits: 500, amount: 35999 }, // ₹359.99
 } as const;
 
-
 // Initialize Razorpay instance with your credentials
 const razorpay = new Razorpay({
   key_id: env.RAZORPAY_KEY_ID,
   key_secret: env.RAZORPAY_SECRET_KEY,
 });
-
 
 export interface RazorpayResponse {
   razorpay_order_id: string;
@@ -44,8 +41,9 @@ export interface RazorpayVerificationResponse {
   credits: number;
 }
 
-
-export async function createRazorpayOrder(priceId: PriceId): Promise<RazorpayOrderResponse> {
+export async function createRazorpayOrder(
+  priceId: PriceId,
+): Promise<RazorpayOrderResponse> {
   const session = await auth();
   if (!session?.user.id) {
     throw new Error("Unauthorized");
@@ -82,11 +80,10 @@ export async function createRazorpayOrder(priceId: PriceId): Promise<RazorpayOrd
   };
 }
 
-
 export async function verifyPayment(
   orderId: string,
   paymentId: string,
-  signature: string
+  signature: string,
 ): Promise<RazorpayVerificationResponse> {
   const session = await auth();
   if (!session?.user.id) {
