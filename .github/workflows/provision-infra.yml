@@ -106,9 +106,20 @@ jobs:
           # Patch the aws-auth ConfigMap to add your GitHub Actions IAM role
           # This grants cluster-admin access for now (system:masters)
           # IMPORTANT: For production, replace system:masters with a more granular RBAC role.
-          kubectl get configmap -n kube-system aws-auth -o yaml | \
-            sed "/^data:/a \ \ mapRoles: |\n \ \ \ \ - rolearn: ${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}\n \ \ \ \ \ \ username: github-actions-user\n \ \ \ \ \ \ groups:\n \ \ \ \ \ \ \ \ - system:masters" | \
-            kubectl apply -f -
+          # kubectl get configmap -n kube-system aws-auth -o yaml | \
+          #   sed "/^data:/a \ \ mapRoles: |\n \ \ \ \ - rolearn: ${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}\n \ \ \ \ \ \ username: github-actions-user\n \ \ \ \ \ \ groups:\n \ \ \ \ \ \ \ \ - system:masters" | \
+          #   kubectl apply -f -
+
+          # eksctl create iamidentitymapping will add the role to aws-auth if it doesn't exist,
+          # or update it if it does.
+          # The --no-duplicate-arns is important to prevent errors if you run this multiple times.
+          eksctl create iamidentitymapping \
+            --cluster ${{ env.EKS_CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --arn "${GITHUB_ACTIONS_DEPLOY_ROLE_ARN}" \
+            --username github-actions-user \
+            --group system:masters \
+            --no-duplicate-arns
 
           echo "Waiting for aws-auth ConfigMap changes to propagate..."
           sleep 30 # Give EKS time to recognize the ConfigMap change
