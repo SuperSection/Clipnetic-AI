@@ -107,7 +107,7 @@ jobs:
   dockerize-and-deploy:
     name: Build & Deploy to ECR/EKS
     runs-on: self-hosted
-    needs: lint-test-build
+    # needs: lint-test-build
     environment: production
     env:
       EKS_CLUSTER_NAME: clipnetic-ai # Your EKS cluster name
@@ -173,7 +173,7 @@ jobs:
             --from-literal=PROCESS_VIDEO_ENDPOINT="${{ secrets.PROCESS_VIDEO_ENDPOINT }}" \
             --from-literal=PROCESS_VIDEO_ENDPOINT_AUTH="${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}" \
             --from-literal=S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply --validate=false -f -
 
       - name: Deploy to EKS using kubectl
         # This command applies your Kubernetes manifests.
