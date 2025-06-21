@@ -153,11 +153,11 @@ jobs:
             --name ${{ env.EKS_CLUSTER_NAME }} \
             --region ${{ env.AWS_REGION }}
 
-      - name: Verify kubectl access (Optional but Recommended)
-        # Helps to quickly check if the assumed IAM user/role can interact with EKS
-        run: |
-          kubectl auth can-i get deployments -n default
-          kubectl get svc -n default
+      # - name: Verify kubectl access (Optional but Recommended)
+      #   # Helps to quickly check if the assumed IAM user/role can interact with EKS
+      #   run: |
+      #     kubectl auth can-i get deployments -n default
+      #     kubectl get svc -n default
 
       - name: Create/Update Kubernetes Secrets (App Env Vars)
         # This step creates/updates a Kubernetes Secret named 'clipnetic-ai-secrets'
