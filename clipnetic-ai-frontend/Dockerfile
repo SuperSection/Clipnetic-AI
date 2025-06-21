@@ -57,23 +57,16 @@ RUN addgroup --system --gid 1001 nodejs && \
 # - The Next.js server (server.js)
 # - The application's compiled code
 # - ONLY the production node_modules it needs (located within the copied .next/standalone/node_modules)
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=root:root --chmod=755 /app/.next/standalone ./
+COPY --from=builder --chown=root:root --chmod=755 /app/public ./public
 # Copy static assets if they are referenced outside of the public directory or directly from .next/static
 # This is often already included within .next/standalone, but good to be explicit if you have custom setup.
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=root:root --chmod=755 /app/.next/static ./.next/static
 
 # Copy prisma directory ONLY if your Next.js frontend explicitly needs the schema/migrations at runtime.
 # For most Next.js frontends interacting with an external backend, this is not needed.
 # If you encounter Prisma runtime errors related to missing schema, you can uncomment this.
 # COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-
-
-# Set permissions to make copied resources read-only for the owner
-# This command recursively removes the write permission ('w') for the user (u),
-# group (g), and others (o) from all files and directories in the current directory.
-# 'a-w' stands for 'all users minus write permission'
-RUN chmod -R a-w .
 
 # Switch to the non-root user for running the application.
 USER nextjs
