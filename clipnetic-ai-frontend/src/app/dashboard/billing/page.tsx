@@ -69,7 +69,7 @@ const plans: PricingPlan[] = [
   },
 ];
 
-function PricingCard({ plan }: { plan: PricingPlan }) {
+function PricingCard({ plan }: Readonly<{ plan: PricingPlan }>) {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {

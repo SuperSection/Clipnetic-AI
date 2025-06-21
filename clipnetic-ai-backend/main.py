@@ -50,10 +50,10 @@ def create_vertical_video(tracks, scores, pyframes_path, pyavi_path, audio_path,
     target_width = 1080
     target_height = 1920
 
-    fList = glob.glob(os.path.join(pyframes_path, "*.jpg"))
-    fList.sort()
+    f_list = glob.glob(os.path.join(pyframes_path, "*.jpg"))
+    f_list.sort()
 
-    faces = [[] for _ in range(len(fList))]
+    faces = [[] for _ in range(len(f_list))]
 
     for t_index, track in enumerate(tracks):
         score_array = scores[t_index]
@@ -72,7 +72,7 @@ def create_vertical_video(tracks, scores, pyframes_path, pyavi_path, audio_path,
     temp_video_path = os.path.join(pyavi_path, "video_only.mp4")
 
     vout = None
-    for f_index, fname in tqdm(enumerate(fList), total=len(fList), desc="Creating vertical video"):
+    for f_index, fname in tqdm(enumerate(f_list), total=len(f_list), desc="Creating vertical video"):
         img = cv2.imread(fname)
         if img is None:
             continue
