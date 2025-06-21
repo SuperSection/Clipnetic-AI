@@ -143,6 +143,22 @@ jobs:
       - name: Push Docker image to ECR
         run: docker push $IMAGE_URI
 
+
+      # 🚨 EKS DEPLOYMENT STEPS 🚨
+      - name: Update Kubeconfig for EKS
+        # This command fetches the cluster configuration and saves it to ~/.kube/config
+        # allowing subsequent kubectl commands to authenticate.
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Verify kubectl access (Optional but Recommended)
+        # Helps to quickly check if the assumed IAM user/role can interact with EKS
+        run: |
+          kubectl auth can-i get deployments -n default
+          kubectl get svc -n default
+
       - name: Create/Update Kubernetes Secrets (App Env Vars)
         # This step creates/updates a Kubernetes Secret named 'clipnetic-ai-secrets'
         # All your runtime application environment variables go here.
@@ -158,22 +174,6 @@ jobs:
             --from-literal=PROCESS_VIDEO_ENDPOINT_AUTH="${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}" \
             --from-literal=S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
             --dry-run=client -o yaml | kubectl apply -f -
-
-
-      # 🚨 EKS DEPLOYMENT STEPS 🚨
-      - name: Update Kubeconfig for EKS
-        # This command fetches the cluster configuration and saves it to ~/.kube/config
-        # allowing subsequent kubectl commands to authenticate.
-        run: |
-          aws eks update-kubeconfig \
-            --name ${{ env.EKS_CLUSTER_NAME }} \
-            --region ${{ env.AWS_REGION }}
-
-      # - name: Verify kubectl access (Optional but Recommended)
-      #   # Helps to quickly check if the assumed IAM user/role can interact with EKS
-      #   run: |
-      #     kubectl auth can-i get deployments -n default
-      #     kubectl get svc -n default
 
       - name: Deploy to EKS using kubectl
         # This command applies your Kubernetes manifests.
