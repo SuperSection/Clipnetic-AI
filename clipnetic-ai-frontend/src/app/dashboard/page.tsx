@@ -12,8 +12,6 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // await new Promise((res) => setTimeout(res, 3000));
-
   const userData = await db.user.findUniqueOrThrow({
     where: {
       id: session.user.id,

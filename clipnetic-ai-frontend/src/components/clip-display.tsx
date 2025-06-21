@@ -10,7 +10,7 @@ type ClipDisplayProps = {
   clips: Clip[];
 };
 
-export function ClipDisplay({ clips }: ClipDisplayProps) {
+export function ClipDisplay({ clips }: Readonly<ClipDisplayProps>) {
   if (clips.length === 0) {
     return (
       <p className="text-muted-foreground p-4 text-center">
@@ -28,7 +28,7 @@ export function ClipDisplay({ clips }: ClipDisplayProps) {
   );
 }
 
-function ClipCard({ clip }: { clip: Clip }) {
+function ClipCard({ clip }: Readonly<{ clip: Clip }>) {
   const [playUrl, setPlayUrl] = useState<string | null>(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
 

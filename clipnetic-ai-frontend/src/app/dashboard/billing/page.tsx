@@ -72,22 +72,11 @@ const plans: PricingPlan[] = [
 function PricingCard({ plan }: { plan: PricingPlan }) {
   const [loading, setLoading] = useState(false);
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
   const handlePayment = async () => {
     setLoading(true);
 
-    const isLoaded = await loadRazorpayScript();
-    if (!isLoaded) {
-      toast.error("Failed to load Razorpay SDK");
+    if (!(window as any).Razorpay) {
+      toast.error("Razorpay SDK not loaded");
       setLoading(false);
       return;
     }
@@ -143,6 +132,7 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
               toast.error("Payment verification failed");
             }
           } catch (error) {
+            console.error("Failed to verify payment", error);
             toast.error("Payment verification failed");
           }
         },
@@ -159,7 +149,8 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (error) {
-      toast.error("Failed to initiate payment");
+      console.error("Failed to initialize payment", error);
+      toast.error("Failed to initiate your payment");
     } finally {
       setLoading(false);
     }
@@ -189,8 +180,8 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
       </CardHeader>
       <CardContent className="space-y-2">
         <ul className="text-muted-foreground space-y-2 text-sm">
-          {plan.features.map((feature, index) => (
-            <li key={index} className="flex items-center gap-2">
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-center gap-2">
               <CheckIcon className="text-primary size-4" />
               {feature}
             </li>

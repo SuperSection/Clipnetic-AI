@@ -143,6 +143,7 @@ export const processVideo = inngest.createFunction(
           status: "failed",
         },
       });
+      console.error("Failed to process video in queue:", error);
     }
   },
 );

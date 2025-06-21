@@ -50,6 +50,7 @@ export function LoginForm({
         router.push("/dashboard");
       }
     } catch (error) {
+      console.error("Failed to log in:", error);
       setError("Failed to log you in!");
     } finally {
       setIsSubmitting(false);

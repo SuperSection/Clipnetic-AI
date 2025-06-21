@@ -59,6 +59,7 @@ export function SignupForm({
         router.push("/dashboard");
       }
     } catch (error) {
+      console.error("Failed to sign up:", error);
       setError("Failed to sign you up!");
     } finally {
       setIsSubmitting(false);
