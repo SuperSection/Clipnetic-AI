@@ -31,7 +31,6 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "~/lib/utils";
 import { ClipDisplay } from "./clip-display";
 
-
 type DashboardClientProps = {
   uploadedFiles: {
     id: string;
