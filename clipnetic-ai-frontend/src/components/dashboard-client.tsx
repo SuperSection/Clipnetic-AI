@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "~/lib/utils";
 import { ClipDisplay } from "./clip-display";
 
+
 type DashboardClientProps = {
   uploadedFiles: {
     id: string;
@@ -46,7 +47,7 @@ type DashboardClientProps = {
 export function DashboardClient({
   uploadedFiles,
   clips,
-}: DashboardClientProps) {
+}: Readonly<DashboardClientProps>) {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,6 +104,7 @@ export function DashboardClient({
         description:
           "There was a problem uploading your video. Please try again.",
       });
+      console.error("Upload failed:", error);
     } finally {
       setUploading(false);
     }
@@ -147,22 +149,20 @@ export function DashboardClient({
                 maxFiles={1}
               >
                 {(dropzone: DropzoneState) => (
-                  <>
-                    <div className="flex flex-col items-center justify-center space-y-4 rounded-lg p-10 text-center">
-                      <UploadCloud className="text-muted-foreground h-12 w-12" />
-                      <p className="font-medium">Drag and drop your file</p>
-                      <p className="text-muted-foreground text-sm">
-                        or click to browse (MP4 upto 500MB)
-                      </p>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="cursor-pointer"
-                      >
-                        Select File
-                      </Button>
-                    </div>
-                  </>
+                  <div className="flex flex-col items-center justify-center space-y-4 rounded-lg p-10 text-center">
+                    <UploadCloud className="text-muted-foreground h-12 w-12" />
+                    <p className="font-medium">Drag and drop your file</p>
+                    <p className="text-muted-foreground text-sm">
+                      or click to browse (MP4 upto 500MB)
+                    </p>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="cursor-pointer"
+                    >
+                      Select File
+                    </Button>
+                  </div>
                 )}
               </Dropzone>
 

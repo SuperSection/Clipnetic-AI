@@ -43,6 +43,7 @@ export async function signUp(data: SignupFormValues): Promise<SignupResponse> {
 
     return { success: true };
   } catch (error) {
+    console.error("Signup error:", error);
     return {
       success: false,
       error: "An error occurred during signup",
