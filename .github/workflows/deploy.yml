@@ -11,6 +11,7 @@ on:
 permissions:
   id-token: write # Required for OIDC
   contents: read
+  security-events: write # Required for SARIF upload
 
 env:
   # These are just to make the secrets available to the shell, not for the app directly
@@ -24,14 +25,14 @@ env:
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: us-east-1 # Your desired AWS region
+  AWS_REGION: ${{ vars.AWS_REGION }}
   NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
   NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
 
 
 jobs:
   lint-test-build:
-    name: Lint, Test, SonarQube, Build
+    name: Check Lint, Scan & Build
     runs-on: self-hosted
     defaults:
       run:
