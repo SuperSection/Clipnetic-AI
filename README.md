@@ -207,6 +207,16 @@ npm run inngest-dev
 
 Access Inngest Development UI on: <http://localhost:8288>
 
+### Inngest Cloud
+
+Refer to [inngest cloud](https://app.inngest.com/) and follow ther steps to setup function and sync app.
+
+---
+
+## Razorpay – Payment Gateway
+
+Refer to [Razorpay Node.js Integration Docs](https://razorpay.com/docs/payments/server-integration/nodejs/)
+
 ---
 
 ## Author
@@ -227,3 +237,5 @@ Access Inngest Development UI on: <http://localhost:8288>
 - [shadcn-dropzone](https://github.com/diragb/shadcn-dropzone)
 - [@aws-sdk/client-s3](https://www.npmjs.com/package/@aws-sdk/client-s3)
 - [@aws-sdk/s3-request-presigner](https://www.npmjs.com/package/@aws-sdk/s3-request-presigner)
+- [Razorpay Node.js Integration Steps](https://razorpay.com/docs/payments/server-integration/nodejs/integration-steps/#integrate-with-razorpay-payment-gateway)
+- [SonarQube cloud](https://sonarcloud.io)
