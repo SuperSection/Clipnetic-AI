@@ -14,7 +14,7 @@ FROM base AS builder
 COPY package.json package-lock.json* ./
 
 # Install all dependencies (development and production) required for the build.
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 # Copy the rest of your application source code into the builder stage.
 COPY . .
@@ -63,14 +63,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # This is often already included within .next/standalone, but good to be explicit if you have custom setup.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# IMPORTANT: The line below is removed!
-# COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-# This was the main source of bloat, as standalone mode makes it redundant.
-
 # Copy prisma directory ONLY if your Next.js frontend explicitly needs the schema/migrations at runtime.
 # For most Next.js frontends interacting with an external backend, this is not needed.
 # If you encounter Prisma runtime errors related to missing schema, you can uncomment this.
 # COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+
+# Set permissions to make copied resources read-only for the owner
+# This command recursively removes the write permission ('w') for the user (u),
+# group (g), and others (o) from all files and directories in the current directory.
+# 'a-w' stands for 'all users minus write permission'
+RUN chmod -R a-w .
 
 # Switch to the non-root user for running the application.
 USER nextjs
