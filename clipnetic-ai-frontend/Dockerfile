@@ -11,7 +11,7 @@ WORKDIR /app
 FROM base AS builder
 # Copy only package.json and lock files first to leverage Docker layer caching.
 # If these files don't change, Docker can reuse this layer.
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
 # Install all dependencies (development and production) required for the build.
 RUN npm ci --legacy-peer-deps --ignore-scripts
