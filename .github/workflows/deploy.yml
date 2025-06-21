@@ -12,6 +12,21 @@ permissions:
   id-token: write # Required for OIDC
   contents: read
 
+env:
+  # These are just to make the secrets available to the shell, not for the app directly
+  AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+  RAZORPAY_SECRET_KEY: ${{ secrets.RAZORPAY_SECRET_KEY }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
+  INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+  PROCESS_VIDEO_ENDPOINT: ${{ secrets.PROCESS_VIDEO_ENDPOINT }}
+  PROCESS_VIDEO_ENDPOINT_AUTH: ${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}
+  S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-1 # Your desired AWS region
+
+
 jobs:
   lint-test-build:
     name: Lint, Test, SonarQube, Build
@@ -35,8 +50,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Lint
         run: npm run lint
@@ -90,7 +103,6 @@ jobs:
     needs: lint-test-build
     environment: production
     env:
-      AWS_REGION: us-east-1 # Your desired AWS region
       EKS_CLUSTER_NAME: clipnetic-ai # Your EKS cluster name
       ECR_REPOSITORY_NAME: clipnetic-ai-frontend # Your ECR repository name
     defaults:
@@ -139,16 +151,6 @@ jobs:
             --from-literal=PROCESS_VIDEO_ENDPOINT_AUTH="${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}" \
             --from-literal=S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
             --dry-run=client -o yaml | kubectl apply -f -
-        env:
-          # These are just to make the secrets available to the shell, not for the app directly
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          RAZORPAY_SECRET_KEY: ${{ secrets.RAZORPAY_SECRET_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
-          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
-          PROCESS_VIDEO_ENDPOINT: ${{ secrets.PROCESS_VIDEO_ENDPOINT }}
-          PROCESS_VIDEO_ENDPOINT_AUTH: ${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
 
       # 🚨 EKS DEPLOYMENT STEPS 🚨
