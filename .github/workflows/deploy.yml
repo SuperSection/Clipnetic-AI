@@ -25,7 +25,7 @@ env:
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
   NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
   NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
 
@@ -166,7 +166,7 @@ jobs:
         # allowing subsequent kubectl commands to authenticate.
         run: |
           aws eks update-kubeconfig \
-            --name ${{ env.EKS_CLUSTER_NAME }} \ # Your EKS cluster name
+            --name ${{ env.EKS_CLUSTER_NAME }} \
             --region ${{ env.AWS_REGION }}
 
       # - name: Verify kubectl access (Optional but Recommended)
@@ -183,7 +183,7 @@ jobs:
           # This assumes your deployment.yaml has a placeholder like __IMAGE_URI__
           # or needs a tool like kustomize for image replacement.
           # Example using sed for direct placeholder replacement:
-          sed -i 's|__IMAGE_URI__|${{ env.IMAGE_URI }}|g' ./k8s/deployment.yaml
+          sed -i 's|__IMAGE_URI__|'$IMAGE_URI'|g' ./k8s/deployment.yaml
 
           kubectl apply -f ./k8s/serviceaccount.yaml # Apply SA first if it's new
           kubectl apply -f ./k8s/deployment.yaml
