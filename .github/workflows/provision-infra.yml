@@ -4,6 +4,9 @@ on:
   workflow_dispatch: # Allows manual trigger from GitHub UI
   # You might also trigger this on push to a specific branch, but manual is safer for infra creation
 
+permissions:
+  contents: read
+
 env:
   AWS_REGION: us-east-1 # Your desired AWS region
   ECR_REPOSITORY_NAME: clipnetic-ai-frontend
