@@ -134,7 +134,7 @@ jobs:
         # Ensure NEXT_PUBLIC_RAZORPAY_KEY_ID is passed as a build-arg if needed client-side
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:latest
-          docker build -t $IMAGE_URI \
+          DOCKER_BUILDKIT=1 docker build -t $IMAGE_URI \
             --build-arg NEXT_PUBLIC_RAZORPAY_KEY_ID="${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}" \
             --build-arg NEXT_PUBLIC_BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}" \
             .
