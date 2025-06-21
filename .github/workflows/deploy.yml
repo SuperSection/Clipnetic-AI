@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: '22' # Your Next.js version compatible version
           cache: 'npm' # Or 'yarn' if you use yarn
-        working-directory: ./clipnetic-ai-frontend
+          cache-dependency-path: './clipnetic-ai-frontend/package-lock.json'
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
@@ -156,7 +156,7 @@ jobs:
         run: |
           aws eks update-kubeconfig \
             --name ${{ env.EKS_CLUSTER_NAME }} \ # Your EKS cluster name
-            --region ${{ vars.AWS_REGION }}
+            --region ${{ env.AWS_REGION }}
 
       # - name: Verify kubectl access (Optional but Recommended)
       #   # Helps to quickly check if the assumed IAM user/role can interact with EKS
