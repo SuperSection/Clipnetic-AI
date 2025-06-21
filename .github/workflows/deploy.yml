@@ -96,6 +96,10 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=clipnetic-ai
+            -Dsonar.projectName=Clipnetic AI
 
       - name: Build Next.js application
         run: npm run build
