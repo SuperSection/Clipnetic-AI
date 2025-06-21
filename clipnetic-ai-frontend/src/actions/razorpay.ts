@@ -55,7 +55,7 @@ export async function createRazorpayOrder(
 
   // Initialize Razorpay instance with your credentials
   const razorpay = new Razorpay({
-    key_id: env.RAZORPAY_KEY_ID,
+    key_id: env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     key_secret: env.RAZORPAY_SECRET_KEY,
   });
 
@@ -101,7 +101,7 @@ export async function verifyPayment(
 
   // Initialize Razorpay instance with your credentials
   const razorpay = new Razorpay({
-    key_id: env.RAZORPAY_KEY_ID,
+    key_id: env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     key_secret: env.RAZORPAY_SECRET_KEY,
   });
 
