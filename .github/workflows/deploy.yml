@@ -1,0 +1,199 @@
+name: CI/CD - Deploy to EKS via ECR
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
+jobs:
+  lint-test-build:
+    name: Lint, Test, SonarQube, Build
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Disabling shallow clones is recommended for improving the relevancy of reporting
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Your Next.js version compatible version
+          cache: 'npm' # Or 'yarn' if you use yarn
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check Formatting
+        run: npm run format:check
+
+      # --- Trivy Scan ---
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          # Trivy will scan the filesystem for vulnerabilities
+          # You might want to scan the Docker image after it's built as well
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Upload Trivy SARIF results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # --- SonarQube Scan ---
+      - name: Set up Java for SonarQube Scanner
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Run SonarQube Scanner
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Build Next.js application
+        run: npm run build
+
+  dockerize-and-deploy:
+    name: Build & Deploy to ECR/EKS
+    runs-on: self-hosted
+    needs: lint-test-build
+    environment: production
+    env:
+      AWS_REGION: us-east-1 # Your desired AWS region
+      EKS_CLUSTER_NAME: clipnetic-ai # Your EKS cluster name
+      ECR_REPOSITORY_NAME: clipnetic-ai-frontend # Your ECR repository name
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and tag Docker image
+        # Ensure NEXT_PUBLIC_RAZORPAY_KEY_ID is passed as a build-arg if needed client-side
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:latest
+          docker build -t $IMAGE_URI \
+            --build-arg NEXT_PUBLIC_RAZORPAY_KEY_ID="${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}" \
+            --build-arg NEXT_PUBLIC_BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}" \
+            .
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Push Docker image to ECR
+        run: docker push $IMAGE_URI
+
+      - name: Create/Update Kubernetes Secrets (App Env Vars)
+        # This step creates/updates a Kubernetes Secret named 'clipnetic-ai-secrets'
+        # All your runtime application environment variables go here.
+        run: |
+          # Use --dry-run=client -o yaml | kubectl apply -f - to create/update
+          kubectl create secret generic clipnetic-ai-secrets \
+            --from-literal=AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+            --from-literal=RAZORPAY_SECRET_KEY="${{ secrets.RAZORPAY_SECRET_KEY }}" \
+            --from-literal=DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            --from-literal=INNGEST_EVENT_KEY="${{ secrets.INNGEST_EVENT_KEY }}" \
+            --from-literal=INNGEST_SIGNING_KEY="${{ secrets.INNGEST_SIGNING_KEY }}" \
+            --from-literal=PROCESS_VIDEO_ENDPOINT="${{ secrets.PROCESS_VIDEO_ENDPOINT }}" \
+            --from-literal=PROCESS_VIDEO_ENDPOINT_AUTH="${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}" \
+            --from-literal=S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+        env:
+          # These are just to make the secrets available to the shell, not for the app directly
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          RAZORPAY_SECRET_KEY: ${{ secrets.RAZORPAY_SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          INNGEST_EVENT_KEY: ${{ secrets.INNGEST_EVENT_KEY }}
+          INNGEST_SIGNING_KEY: ${{ secrets.INNGEST_SIGNING_KEY }}
+          PROCESS_VIDEO_ENDPOINT: ${{ secrets.PROCESS_VIDEO_ENDPOINT }}
+          PROCESS_VIDEO_ENDPOINT_AUTH: ${{ secrets.PROCESS_VIDEO_ENDPOINT_AUTH }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+
+
+      # 🚨 EKS DEPLOYMENT STEPS 🚨
+      - name: Update Kubeconfig for EKS
+        # This command fetches the cluster configuration and saves it to ~/.kube/config
+        # allowing subsequent kubectl commands to authenticate.
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER_NAME }} \ # Your EKS cluster name
+            --region ${{ vars.AWS_REGION }}
+
+      # - name: Verify kubectl access (Optional but Recommended)
+      #   # Helps to quickly check if the assumed IAM user/role can interact with EKS
+      #   run: |
+      #     kubectl auth can-i get deployments -n default
+      #     kubectl get svc -n default
+
+      - name: Deploy to EKS using kubectl
+        # This command applies your Kubernetes manifests.
+        # You need to inject the dynamic image URI into your deployment.yaml.
+        run: |
+          # Inject the dynamically built image URI into your deployment manifest
+          # This assumes your deployment.yaml has a placeholder like __IMAGE_URI__
+          # or needs a tool like kustomize for image replacement.
+          # Example using sed for direct placeholder replacement:
+          sed -i 's|__IMAGE_URI__|${{ env.IMAGE_URI }}|g' ./k8s/deployment.yaml
+
+          kubectl apply -f ./k8s/serviceaccount.yaml # Apply SA first if it's new
+          kubectl apply -f ./k8s/deployment.yaml
+          kubectl apply -f ./k8s/service.yaml
+          kubectl apply -f ./k8s/ingress.yaml # Apply Ingress if you want external access
+
+          # Optional: Wait for deployment rollout to complete
+          kubectl rollout status deployment/clipnetic-ai -n default --timeout=5m
+          echo "Deployment to EKS complete!"
+
+      # - name: Trigger Inngest Deployment (Optional)
+      #   if: always()
+      #   run: echo "Triggering Inngest or other downstream systems..."
+
+  notify:
+    name: Notify Success
+    runs-on: self-hosted
+    needs: dockerize-and-deploy
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: "✅ Deployment successful to EKS"
+          SLACK_COLOR: good

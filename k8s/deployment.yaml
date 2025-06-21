@@ -1,0 +1,58 @@
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clipnetic-ai
+  namespace: default # Or your chosen namespace
+  labels:
+    app: clipnetic-ai
+spec:
+  replicas: 2 # Start with 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: clipnetic-ai
+  template:
+    metadata:
+      labels:
+        app: clipnetic-ai
+    spec:
+      # Optional: Reference a Service Account for fine-grained permissions (e.g., ECR pull).
+      # If you're using IRSA for ECR image pull, you'd specify it here.
+      serviceAccountName: clipnetic-ai-sa # Create this Service Account separately
+
+      containers:
+        - name: clipnetic-ai
+          image: __IMAGE_URI__ # Placeholder for CI/CD pipeline to inject the ECR image URI
+          ports:
+            - containerPort: 3000 # Next.js application default port
+          envFrom:
+            # Reference a Kubernetes Secret that contains your application's environment variables
+            - secretRef:
+                name: clipnetic-ai-secrets # Name of your Secret containing ENV vars
+
+          resources:
+            # Define resource requests and limits to ensure stable performance and prevent resource starvation
+            requests:
+              cpu: "250m" # 0.25 vCPU
+              memory: "512Mi" # 512 MB
+            limits:
+              cpu: "500m" # 0.5 vCPU
+              memory: "1Gi" # 1 GB
+
+          # Health checks to ensure Kubernetes knows if your app is healthy
+          livenessProbe:
+            httpGet:
+              path: / # Or a specific health endpoint like /api/health
+              port: 3000
+            initialDelaySeconds: 30 # Give the app time to start up
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: / # Or a specific health endpoint like /api/health
+              port: 3000
+            initialDelaySeconds: 15 # App is ready sooner than it's "alive"
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

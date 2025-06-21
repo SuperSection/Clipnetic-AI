@@ -1,0 +1,16 @@
+# k8s/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: clipnetic-ai-service
+  namespace: default # Or your chosen namespace
+  labels:
+    app: clipnetic-ai
+spec:
+  selector:
+    app: clipnetic-ai # Selects pods with this label (your deployment's pods)
+  ports:
+    - protocol: TCP
+      port: 80        # Port the Service listens on (standard HTTP)
+      targetPort: 3000 # Port the application container is listening on
+  type: ClusterIP # Internal cluster IP, exposed externally by Ingress

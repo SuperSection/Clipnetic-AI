@@ -1,0 +1,38 @@
+# k8s/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clipnetic-ai-ingress
+  namespace: default # Or your chosen namespace
+  annotations:
+    kubernetes.io/ingress.class: alb # Specify ALB Ingress Controller
+    alb.ingress.kubernetes.io/scheme: internet-facing # Internal or internet-facing ALB
+    alb.ingress.kubernetes.io/target-type: ip # Use IP mode for ALB
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600 # Optional: Extend idle timeout
+    # SSL/TLS Configuration:
+    # Use an AWS Certificate Manager (ACM) ARN for HTTPS
+    alb.ingress.kubernetes.io/ssl-redirect: "443" # Optional: Redirect HTTP to HTTPS
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]' # Listen on both HTTP and HTTPS
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:384064000786:certificate/<YOUR_ACM_CERT_ID> # <--- IMPORTANT: REPLACE THIS
+    # Health Check Configuration (ALB's health check for the target group)
+    alb.ingress.kubernetes.io/healthcheck-path: / # Path for ALB health check
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+  labels:
+    app: clipnetic-ai
+spec:
+  ingressClassName: alb # Explicitly sets the Ingress Class for Kubernetes 1.19+
+  rules:
+    - host: clipnetic-ai.soumosarkar.xyz # <--- IMPORTANT: REPLACE WITH YOUR DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: clipnetic-ai-service
+                port:
+                  number: 80 # Matches the Service's exposed port
