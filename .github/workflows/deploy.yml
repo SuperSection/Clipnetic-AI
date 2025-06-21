@@ -99,7 +99,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=clipnetic-ai
-            -Dsonar.projectName=Clipnetic AI
+            -Dsonar.projectName="Clipnetic AI"
 
       - name: Build Next.js application
         run: npm run build
