@@ -77,7 +77,7 @@ function ClipCard({ clip }: Readonly<{ clip: Clip }>) {
             controls
             preload="metadata"
             className="h-full w-full rounded-md object-cover"
-          />
+          ><track kind="captions" /></video>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Play className="text-muted-foreground h-10 w-10 opacity-50" />

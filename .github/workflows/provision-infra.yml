@@ -18,7 +18,7 @@ jobs:
   provision-infra:
     runs-on: self-hosted # Use your self-hosted runner
     environment: # Optional: Define an environment for better visibility/security
-      name: development
+      name: production
       # url: https://your-eks-cluster-dashboard-url.com
 
     steps:
@@ -164,7 +164,7 @@ jobs:
           echo "Verifying kubectl access for github-actions-user..."
 
           MAX_RETRIES=5
-          RETRY_DELAY=20 # seconds - Increased delay
+          RETRY_DELAY=10 # seconds - Increased delay if needed
 
           # First, ensure kubeconfig is up-to-date right before the checks
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
