@@ -172,6 +172,8 @@ jobs:
           # Use --dry-run=client -o yaml | kubectl apply -f - to create/update
           kubectl create secret generic clipnetic-ai-secrets \
             --from-literal=AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+            --from-literal=AUTH_URL="${{ AUTH_URL }}" \
+            --from-literal=AUTH_TRUST_HOST="true" \
             --from-literal=RAZORPAY_SECRET_KEY="${{ secrets.RAZORPAY_SECRET_KEY }}" \
             --from-literal=DATABASE_URL="${{ secrets.DATABASE_URL }}" \
             --from-literal=INNGEST_EVENT_KEY="${{ secrets.INNGEST_EVENT_KEY }}" \
@@ -191,7 +193,8 @@ jobs:
           # This assumes your deployment.yaml has a placeholder like __IMAGE_URI__
           # or needs a tool like kustomize for image replacement.
           # Example using sed for direct placeholder replacement:
-          sed -i 's|__IMAGE_URI__|'$IMAGE_URI'|g' ../k8s/deployment.yaml
+          sed -i "s|__IMAGE_URI__|${IMAGE_URI}|g" ../k8s/deployment.yaml
+          sed -i "s|__IAM_ROLE_ARN__|${{ secrets.AWS_IAM_ROLE_ARN }}|g" ../k8s/serviceaccount.yaml
 
           kubectl apply -f ../k8s/serviceaccount.yaml # Apply SA first if it's new
           kubectl apply -f ../k8s/deployment.yaml
