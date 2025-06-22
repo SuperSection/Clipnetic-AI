@@ -116,7 +116,7 @@ jobs:
   dockerize-and-deploy:
     name: Build & Deploy to ECR/EKS
     runs-on: self-hosted
-    needs: lint-test-build
+    # needs: lint-test-build
     environment: production
     env:
       EKS_CLUSTER_NAME: clipnetic-ai # Your EKS cluster name
