@@ -1,0 +1,53 @@
+name: Install AWS Load Balancer Controller
+
+on:
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  install-alb-controller:
+    runs-on: self-hosted
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROVISIONER }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROVISIONER }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name clipnetic-ai --region ${{ secrets.AWS_REGION }}
+
+      - name: Install AWS Load Balancer Controller
+        run: |
+          # Download IAM policy
+          curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json
+          
+          # Create IAM policy
+          aws iam create-policy \
+            --policy-name AWSLoadBalancerControllerIAMPolicy \
+            --policy-document file://iam_policy.json || echo "Policy already exists"
+          
+          # Create service account
+          eksctl create iamserviceaccount \
+            --cluster=clipnetic-ai \
+            --namespace=kube-system \
+            --name=aws-load-balancer-controller \
+            --role-name AmazonEKSLoadBalancerControllerRole \
+            --attach-policy-arn=arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):policy/AWSLoadBalancerControllerIAMPolicy \
+            --approve || echo "Service account already exists"
+          
+          # Install cert-manager
+          kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.13.5/cert-manager.yaml
+          
+          # Wait for cert-manager
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
+          
+          # Install AWS Load Balancer Controller
+          curl -Lo v2_7_2_full.yaml https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.7.2/v2_7_2_full.yaml
+          sed -i.bak -e '596,604d' ./v2_7_2_full.yaml
+          sed -i.bak -e 's|your-cluster-name|clipnetic-ai|' ./v2_7_2_full.yaml
+          kubectl apply -f v2_7_2_full.yaml
+          
+          # Wait for controller
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=aws-load-balancer-controller -n kube-system --timeout=300s

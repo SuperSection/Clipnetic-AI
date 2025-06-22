@@ -207,7 +207,7 @@ jobs:
   notify:
     name: Notify Success
     runs-on: self-hosted
-    # needs: dockerize-and-deploy
+    needs: dockerize-and-deploy
     steps:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
