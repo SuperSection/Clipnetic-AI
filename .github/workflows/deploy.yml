@@ -29,14 +29,6 @@ env:
 
 
 jobs:
-  # get-id-token:
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Get ID Token
-  #       run: |
-  #         ID_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://demo" | jq -r .value)
-  #         echo $ID_TOKEN | base64
-
   # lint-test-build:
   #   name: Check Lint, Scan & Build
   #   runs-on: self-hosted
