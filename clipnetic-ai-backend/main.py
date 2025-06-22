@@ -385,23 +385,7 @@ class ClipneticAI:
 
     If there are no valid clips to extract, the output should be an empty list [], in JSON format. Also readable by json.loads() in Python.
 
-    The transcript is as follows:\n\n""" + str(transcript), tools=[
-                {
-                    "name": "json_response",
-                    "description": "Output must be valid JSON array of clip objects.",
-                    "parameters": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "start": {"type": "number"},
-                                    "end": {"type": "number"}
-                                },
-                                "required": ["start", "end"]
-                            }
-                    }
-                }
-            ])
+    The transcript is as follows:\n\n""" + str(transcript))
 
         print(f"Identified moments response: {response.text}")
         return response.text
