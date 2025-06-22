@@ -11,7 +11,7 @@ metadata:
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=600 # Optional: Extend idle timeout
     # SSL/TLS Configuration:
     # Use an AWS Certificate Manager (ACM) ARN for HTTPS
-    alb.ingress.kubernetes.io/ssl-redirect: "443" # Optional: Redirect HTTP to HTTPS
+    # alb.ingress.kubernetes.io/ssl-redirect: "443" # Optional: Redirect HTTP to HTTPS
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]' # Listen on both HTTP and HTTPS
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:384064000786:certificate/ebc0eb3a-c4ff-45f8-a141-fad4e7874c3d # <--- IMPORTANT: REPLACE THIS
     # Health Check Configuration (ALB's health check for the target group)
