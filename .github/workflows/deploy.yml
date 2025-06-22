@@ -172,7 +172,7 @@ jobs:
           # Use --dry-run=client -o yaml | kubectl apply -f - to create/update
           kubectl create secret generic clipnetic-ai-secrets \
             --from-literal=AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
-            --from-literal=AUTH_URL="${{ AUTH_URL }}" \
+            --from-literal=AUTH_URL="${{ secrets.AUTH_URL }}" \
             --from-literal=AUTH_TRUST_HOST="true" \
             --from-literal=RAZORPAY_SECRET_KEY="${{ secrets.RAZORPAY_SECRET_KEY }}" \
             --from-literal=DATABASE_URL="${{ secrets.DATABASE_URL }}" \
