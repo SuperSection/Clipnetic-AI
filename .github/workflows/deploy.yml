@@ -183,7 +183,7 @@ jobs:
             --from-literal=AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
             --from-literal=AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
             --from-literal=S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
-            --dry-run=client -o yaml | kubectl apply --validate=false -f -
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to EKS using kubectl
         # This command applies your Kubernetes manifests.

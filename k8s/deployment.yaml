@@ -34,9 +34,11 @@ spec:
             requests:
               cpu: "250m" # 0.25 vCPU
               memory: "512Mi" # 512 MB
+              ephemeral-storage: "1Gi" # 1 GB storage request
             limits:
               cpu: "500m" # 0.5 vCPU
               memory: "1Gi" # 1 GB
+              ephemeral-storage: "2Gi" # 2 GB storage limit
 
           # Health checks to ensure Kubernetes knows if your app is healthy
           livenessProbe:
