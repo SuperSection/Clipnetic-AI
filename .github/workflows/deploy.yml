@@ -131,10 +131,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.2.1
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
-          role-session-name: GitHubActionsEKSDeployment
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROVISIONER }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROVISIONER }}
           aws-region: ${{ env.AWS_REGION }}
-          audience: sts.amazonaws.com
 
       - name: Print assumed role
         run: aws sts get-caller-identity
