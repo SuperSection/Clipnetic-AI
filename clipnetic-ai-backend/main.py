@@ -385,7 +385,23 @@ class ClipneticAI:
 
     If there are no valid clips to extract, the output should be an empty list [], in JSON format. Also readable by json.loads() in Python.
 
-    The transcript is as follows:\n\n""" + str(transcript))
+    The transcript is as follows:\n\n""" + str(transcript), tools=[
+                {
+                    "name": "json_response",
+                    "description": "Output must be valid JSON array of clip objects.",
+                    "parameters": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "start": {"type": "number"},
+                                    "end": {"type": "number"}
+                                },
+                                "required": ["start", "end"]
+                            }
+                    }
+                }
+            ])
 
         print(f"Identified moments response: {response.text}")
         return response.text
@@ -415,13 +431,26 @@ class ClipneticAI:
         print("Identifying clip moments")
         identified_moments_raw = self.identify_moments(transcript_segments)
 
+        print(f"Raw response from Gemini: {repr(identified_moments_raw)}")
+
         cleaned_json_string = identified_moments_raw.strip()
         if cleaned_json_string.startswith("```json"):
             cleaned_json_string = cleaned_json_string[len("```json"):].strip()
         if cleaned_json_string.endswith("```"):
             cleaned_json_string = cleaned_json_string[:-len("```")].strip()
 
-        clip_moments = json.loads(cleaned_json_string)
+        print(f"Cleaned JSON string: {repr(cleaned_json_string)}")
+
+        if not cleaned_json_string:
+            print("Error: Cleaned JSON string is empty")
+            clip_moments = []
+        else:
+            try:
+                clip_moments = json.loads(cleaned_json_string)
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                print(f"Problematic string: {repr(cleaned_json_string)}")
+                clip_moments = []
         if not clip_moments or not isinstance(clip_moments, list):
             print("Error: Identified moments is not a list")
             clip_moments = []
