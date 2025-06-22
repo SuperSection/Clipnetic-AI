@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: us-east-1 # Your desired AWS region
+  AWS_REGION: ${{ secrets.AWS_REGION }} # Your desired AWS region
   ECR_REPOSITORY_NAME: clipnetic-ai-frontend
   EKS_CLUSTER_NAME: clipnetic-ai
   EKS_NODEGROUP_NAME: clipnetic-ai-nodes
@@ -25,15 +25,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Configure AWS credentials (if not using EC2 instance profile)
-      #   # This step is only needed if your runner is NOT an EC2 instance
-      #   # If your runner is an EC2 instance with an attached IAM role, remove this block.
-      #   # This assumes you've manually set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as GitHub Secrets
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROVISIONER }} # Use a secret with high permissions
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROVISIONER }} # Use a secret with high permissions
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials (if not using EC2 instance profile)
+        # This step is only needed if your runner is NOT an EC2 instance
+        # If your runner is an EC2 instance with an attached IAM role, remove this block.
+        # This assumes you've manually set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as GitHub Secrets
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROVISIONER }} # Use a secret with high permissions
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROVISIONER }} # Use a secret with high permissions
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS CLI installation
         run: aws --version

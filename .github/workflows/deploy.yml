@@ -31,6 +31,14 @@ env:
 
 
 jobs:
+  get-id-token:
+    runs-on: self-hosted
+    steps:
+      - name: Get ID Token
+        run: |
+          ID_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://demo" | jq -r .value)
+          echo $ID_TOKEN | base64
+
   lint-test-build:
     name: Check Lint, Scan & Build
     runs-on: self-hosted
@@ -62,7 +70,7 @@ jobs:
 
       # --- Trivy Scan ---
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.31.0
         with:
           # Trivy will scan the filesystem for vulnerabilities
           # You might want to scan the Docker image after it's built as well
@@ -92,7 +100,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       - name: Run SonarQube Scanner
-        uses: SonarSource/sonarqube-scan-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
