@@ -13,6 +13,7 @@ permissions:
   contents: read
   security-events: write # Required for SARIF upload
 
+
 env:
   # These are just to make the secrets available to the shell, not for the app directly
   AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -29,86 +30,87 @@ env:
 
 
 jobs:
-  # lint-test-build:
-  #   name: Check Lint, Scan & Build
-  #   runs-on: self-hosted
-  #   defaults:
-  #     run:
-  #       working-directory: ./clipnetic-ai-frontend
-  #   env:
-  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         # Disabling shallow clones is recommended for improving the relevancy of reporting
-  #         fetch-depth: 0
+  lint-test-build:
+    name: Check Lint, Scan & Build
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: ./clipnetic-ai-frontend
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Disabling shallow clones is recommended for improving the relevancy of reporting
+          fetch-depth: 0
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '22' # Your Next.js version compatible version
-  #         cache: 'npm' # Or 'yarn' if you use yarn
-  #         cache-dependency-path: './clipnetic-ai-frontend/package-lock.json'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Your Next.js version compatible version
+          cache: 'npm' # Or 'yarn' if you use yarn
+          cache-dependency-path: './clipnetic-ai-frontend/package-lock.json'
 
-  #     - name: Install dependencies
-  #       run: npm ci --legacy-peer-deps
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
-  #     - name: Lint
-  #       run: npm run lint
+      - name: Lint
+        run: npm run lint
 
-  #     - name: Check Formatting
-  #       run: npm run format:check
+      - name: Check Formatting
+        run: npm run format:check
 
-  #     # --- Trivy Scan ---
-  #     - name: Run Trivy vulnerability scan
-  #       uses: aquasecurity/trivy-action@0.31.0
-  #       with:
-  #         # Trivy will scan the filesystem for vulnerabilities
-  #         # You might want to scan the Docker image after it's built as well
-  #         scan-type: 'fs'
-  #         ignore-unfixed: true
-  #         format: 'sarif'
-  #         output: 'trivy-results.sarif'
-  #         severity: 'HIGH,CRITICAL'
+      # --- Trivy Scan ---
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.31.0
+        with:
+          # Trivy will scan the filesystem for vulnerabilities
+          # You might want to scan the Docker image after it's built as well
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
 
-  #     - name: Upload Trivy SARIF results to GitHub Code Scanning
-  #       uses: github/codeql-action/upload-sarif@v3
-  #       with:
-  #         sarif_file: 'trivy-results.sarif'
+      - name: Upload Trivy SARIF results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
 
-  #     # --- SonarQube Scan ---
-  #     - name: Set up Java for SonarQube Scanner
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '21'
+      # --- SonarQube Scan ---
+      - name: Set up Java for SonarQube Scanner
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
-  #     - name: Cache SonarQube packages
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: ~/.sonar/cache
-  #         key: ${{ runner.os }}-sonar
-  #         restore-keys: ${{ runner.os }}-sonar
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-  #     - name: Run SonarQube Scanner
-  #       uses: SonarSource/sonarqube-scan-action@v5.2.0
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-  #       with:
-  #         args: >
-  #           -Dsonar.projectKey=clipnetic-ai
-  #           -Dsonar.projectName="Clipnetic AI"
+      - name: Run SonarQube Scanner
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=clipnetic-ai
+            -Dsonar.projectName="Clipnetic AI"
 
-  #     - name: Build Next.js application
-  #       run: npm run build
+      - name: Build Next.js application
+        run: npm run build
+
 
   dockerize-and-deploy:
     name: Build & Deploy to ECR/EKS
     runs-on: self-hosted
-    # needs: lint-test-build
+    needs: lint-test-build
     environment: production
     env:
       EKS_CLUSTER_NAME: clipnetic-ai # Your EKS cluster name
@@ -203,6 +205,7 @@ jobs:
       # - name: Trigger Inngest Deployment (Optional)
       #   if: always()
       #   run: echo "Triggering Inngest or other downstream systems..."
+
 
   notify:
     name: Notify Success
