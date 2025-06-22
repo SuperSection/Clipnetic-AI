@@ -197,12 +197,12 @@ jobs:
           # This assumes your deployment.yaml has a placeholder like __IMAGE_URI__
           # or needs a tool like kustomize for image replacement.
           # Example using sed for direct placeholder replacement:
-          sed -i 's|__IMAGE_URI__|'$IMAGE_URI'|g' ./k8s/deployment.yaml
+          sed -i 's|__IMAGE_URI__|'$IMAGE_URI'|g' ../k8s/deployment.yaml
 
-          kubectl apply -f ./k8s/serviceaccount.yaml # Apply SA first if it's new
-          kubectl apply -f ./k8s/deployment.yaml
-          kubectl apply -f ./k8s/service.yaml
-          kubectl apply -f ./k8s/ingress.yaml # Apply Ingress if you want external access
+          kubectl apply -f ../k8s/serviceaccount.yaml # Apply SA first if it's new
+          kubectl apply -f ../k8s/deployment.yaml
+          kubectl apply -f ../k8s/service.yaml
+          kubectl apply -f ../k8s/ingress.yaml # Apply Ingress if you want external access
 
           # Optional: Wait for deployment rollout to complete
           kubectl rollout status deployment/clipnetic-ai -n default --timeout=5m
