@@ -46,6 +46,9 @@ jobs:
           # Wait for cert-manager
           kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
           
+          # Delete existing deployment if it exists
+          kubectl delete deployment aws-load-balancer-controller -n kube-system --ignore-not-found=true
+          
           # Install AWS Load Balancer Controller
           curl -Lo v2_7_2_full.yaml https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.7.2/v2_7_2_full.yaml
           sed -i.bak -e '596,604d' ./v2_7_2_full.yaml
