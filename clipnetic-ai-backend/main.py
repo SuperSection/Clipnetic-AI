@@ -18,12 +18,15 @@ import os
 from google import genai
 
 import pysubs2
+import requests
 from tqdm import tqdm
 import whisperx
 
 
 class ProcessVideoRequest(BaseModel):
     s3_key: str
+    uploaded_file_id: str
+    webhook_url: str
 
 
 image = (modal.Image.from_registry(
@@ -304,7 +307,7 @@ def process_clip(base_dir: str, original_video_path: str, s3_key: str, start_tim
                                  end_time, vertical_mp4_path, subtitile_output_path, max_words=5)
 
     s3_client = boto3.client("s3")
-    s3_client.upload_file(vertical_mp4_path, "clipnetic-ai", output_s3_key)
+    s3_client.upload_file(str(subtitile_output_path), "clipnetic-ai", output_s3_key)
 
 
 @app.cls(gpu="L40S", timeout=900, retries=0, scaledown_window=20, secrets=[modal.Secret.from_name("clipnetic-ai-secret")], volumes={mount_path: volume})
@@ -393,65 +396,90 @@ class ClipneticAI:
     @modal.fastapi_endpoint(method="POST")
     def process_video(self, request: ProcessVideoRequest, token: HTTPAuthorizationCredentials = Depends(auth_scheme)):
         s3_key = request.s3_key
+        uploaded_file_id = request.uploaded_file_id
+        webhook_url = request.webhook_url
 
         if token.credentials != os.environ["AUTH_TOKEN"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Incorrect bearer token", headers={"WWW-Authenticate": "Bearer"})
 
+        # Spawn processing asynchronously and return immediately
+        self._process_video_async.spawn(s3_key, uploaded_file_id, webhook_url)
+
+        return {"message": "Processing started"}
+
+    @modal.method()
+    def _process_video_async(self, s3_key: str, uploaded_file_id: str, webhook_url: str):
         run_id = str(uuid.uuid4())
         base_dir = pathlib.Path("/tmp") / run_id
         base_dir.mkdir(parents=True, exist_ok=True)
 
-        # Download video file
-        video_path = base_dir / "input.mp4"
-        s3_client = boto3.client("s3")
-        s3_client.download_file("clipnetic-ai", s3_key, str(video_path))
+        try:
+            # Download video file
+            video_path = base_dir / "input.mp4"
+            s3_client = boto3.client("s3")
+            s3_client.download_file("clipnetic-ai", s3_key, str(video_path))
 
-        # 1. Transcription
-        transcript_segments_json = self.transcribe_video(base_dir, video_path)
-        transcript_segments = json.loads(transcript_segments_json)
+            # 1. Transcription
+            transcript_segments_json = self.transcribe_video(base_dir, video_path)
+            transcript_segments = json.loads(transcript_segments_json)
 
-        # 2. Identify moments for clips
-        print("Identifying clip moments")
-        identified_moments_raw = self.identify_moments(transcript_segments)
+            # 2. Identify moments for clips
+            print("Identifying clip moments")
+            identified_moments_raw = self.identify_moments(transcript_segments)
 
-        print(f"Raw response from Gemini: {repr(identified_moments_raw)}")
+            print(f"Raw response from Gemini: {repr(identified_moments_raw)}")
 
-        cleaned_json_string = identified_moments_raw.strip()
-        if cleaned_json_string.startswith("```json"):
-            cleaned_json_string = cleaned_json_string[len("```json"):].strip()
-        if cleaned_json_string.endswith("```"):
-            cleaned_json_string = cleaned_json_string[:-len("```")].strip()
+            cleaned_json_string = identified_moments_raw.strip()
+            if cleaned_json_string.startswith("```json"):
+                cleaned_json_string = cleaned_json_string[len("```json"):].strip()
+            if cleaned_json_string.endswith("```"):
+                cleaned_json_string = cleaned_json_string[:-len("```")].strip()
 
-        print(f"Cleaned JSON string: {repr(cleaned_json_string)}")
+            print(f"Cleaned JSON string: {repr(cleaned_json_string)}")
 
-        if not cleaned_json_string:
-            print("Error: Cleaned JSON string is empty")
-            clip_moments = []
-        else:
-            try:
-                clip_moments = json.loads(cleaned_json_string)
-            except json.JSONDecodeError as e:
-                print(f"JSON decode error: {e}")
-                print(f"Problematic string: {repr(cleaned_json_string)}")
+            if not cleaned_json_string:
+                print("Error: Cleaned JSON string is empty")
                 clip_moments = []
-        if not clip_moments or not isinstance(clip_moments, list):
-            print("Error: Identified moments is not a list")
-            clip_moments = []
+            else:
+                try:
+                    clip_moments = json.loads(cleaned_json_string)
+                except json.JSONDecodeError as e:
+                    print(f"JSON decode error: {e}")
+                    print(f"Problematic string: {repr(cleaned_json_string)}")
+                    clip_moments = []
+            if not clip_moments or not isinstance(clip_moments, list):
+                print("Error: Identified moments is not a list")
+                clip_moments = []
 
-        print(clip_moments)
+            print(clip_moments)
 
-        # 3. Process clips
-        for index, moment in enumerate(clip_moments[:1]):
-            if "start" in moment and "end" in moment:
-                print(
-                    f"Processing clip {index}: from {moment['start']} to {moment['end']}")
-                process_clip(base_dir, video_path, s3_key,
-                             moment["start"], moment["end"], index, transcript_segments)
+            # 3. Process clips
+            for index, moment in enumerate(clip_moments[:1]):
+                if "start" in moment and "end" in moment:
+                    print(
+                        f"Processing clip {index}: from {moment['start']} to {moment['end']}")
+                    process_clip(base_dir, video_path, s3_key,
+                                 moment["start"], moment["end"], index, transcript_segments)
 
-        if base_dir.exists():
-            print(f"Cleaning up tmp dir after {base_dir}")
-            shutil.rmtree(base_dir, ignore_errors=True)
+            # Notify webhook of completion
+            try:
+                response = requests.post(webhook_url, json={"uploaded_file_id": uploaded_file_id}, timeout=30)
+                print(f"Webhook notification sent: {response.status_code}")
+            except Exception as e:
+                print(f"Webhook notification failed: {e}")
+
+        except Exception as e:
+            print(f"Processing failed: {e}")
+            try:
+                requests.post(webhook_url, json={"uploaded_file_id": uploaded_file_id, "error": str(e)}, timeout=30)
+            except:
+                pass
+
+        finally:
+            if base_dir.exists():
+                print(f"Cleaning up tmp dir after {base_dir}")
+                shutil.rmtree(base_dir, ignore_errors=True)
 
 
 @app.local_entrypoint()

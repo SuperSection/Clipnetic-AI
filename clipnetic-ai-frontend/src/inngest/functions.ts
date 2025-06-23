@@ -62,13 +62,30 @@ export const processVideo = inngest.createFunction(
           });
         });
 
-        await step.fetch(env.PROCESS_VIDEO_ENDPOINT, {
-          method: "POST",
-          body: JSON.stringify({ s3_key: s3Key }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${env.PROCESS_VIDEO_ENDPOINT_AUTH}`,
-          },
+        await step.run("trigger-processing", async () => {
+          const res = await fetch(
+            `${env.NEXT_PUBLIC_BASE_URL}/api/process-video`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                s3_key: s3Key,
+                uploaded_file_id: uploadedFileId,
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          if (!res.ok) {
+            throw new Error(`Failed to trigger processing: ${res.statusText}`);
+          }
+        });
+
+        const completionEvent = await step.waitForEvent("wait-for-completion", {
+          event: "clipnetic-ai/processing-complete",
+          match: "data.uploadedFileId",
+          timeout: "10m",
         });
 
         const { clipsFound } = await step.run(
@@ -99,9 +116,7 @@ export const processVideo = inngest.createFunction(
 
         await step.run("deduct-credits", async () => {
           await db.user.update({
-            where: {
-              id: userId,
-            },
+            where: { id: userId },
             data: {
               credits: {
                 decrement: Math.min(credits, clipsFound),
@@ -112,12 +127,8 @@ export const processVideo = inngest.createFunction(
 
         await step.run("set-status-processed", async () => {
           await db.uploadedFile.update({
-            where: {
-              id: uploadedFileId,
-            },
-            data: {
-              status: "processed",
-            },
+            where: { id: uploadedFileId },
+            data: { status: "processed" },
           });
         });
       } else {
