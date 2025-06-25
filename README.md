@@ -10,6 +10,18 @@ Clipnetic-AI is an end-to-end SaaS platform that transforms long-form podcast vi
 
 ---
 
+## Tech Stack
+
+- **Frontend**: Next.js 15, ShadCN UI, Tailwind CSS
+- **AI/Backend**: Python, Gemini AI model, Modal (serverless GPU)
+- **Queue System**: Inngest for background processing
+- **Auth**: NextAuth.js with JWT & credential providers
+- **Cloud**: AWS S3, ECR, EKS with ALB Ingress Controller
+- **Payments**: Razorpay integration
+- **Database**: Prisma ORM with Neon PostgreSQL
+
+---
+
 ## Features
 
 - 🎬 Auto-detection of viral moments in podcasts (stories, questions, etc.)
@@ -216,6 +228,23 @@ Refer to [inngest cloud](https://app.inngest.com/) and follow ther steps to setu
 ## Razorpay – Payment Gateway
 
 Refer to [Razorpay Node.js Integration Docs](https://razorpay.com/docs/payments/server-integration/nodejs/)
+
+---
+
+## CI/CD Pipeline Automation
+
+Overview of what I implemented:
+
+- **GitHub Actions** with self-hosted runners
+- **Multi-stage pipeline**: Lint → Test → Security → Build → Deploy
+- **SonarQube** for code quality analysis
+- **Trivy** for vulnerability scanning
+- **Docker containerization** with multi-stage builds
+- **ECR** for container registry
+- **EKS deployment** with Kubernetes manifests
+- **AWS Load Balancer Controller** for ingress
+- **Automated secret management** in K8s
+- **Slack notifications** for deployment status
 
 ---
 
